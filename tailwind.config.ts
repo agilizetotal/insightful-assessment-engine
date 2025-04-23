@@ -28,6 +28,14 @@ export default {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))'
 				},
+				quiz: {
+					primary: '#4F46E5',
+					secondary: '#7C3AED',
+					accent: '#8B5CF6',
+					highlight: '#A78BFA',
+					muted: '#C4B5FD',
+					light: '#EDE9FE',
+				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
 					foreground: 'hsl(var(--secondary-foreground))'
