@@ -9,7 +9,266 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      profile_ranges: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          max_score: number
+          min_score: number
+          profile: string
+          quiz_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          max_score: number
+          min_score: number
+          profile: string
+          quiz_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          max_score?: number
+          min_score?: number
+          profile?: string
+          quiz_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_ranges_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      question_answers: {
+        Row: {
+          answer: string[] | null
+          created_at: string | null
+          id: string
+          question_id: string | null
+          response_id: string | null
+        }
+        Insert: {
+          answer?: string[] | null
+          created_at?: string | null
+          id?: string
+          question_id?: string | null
+          response_id?: string | null
+        }
+        Update: {
+          answer?: string[] | null
+          created_at?: string | null
+          id?: string
+          question_id?: string | null
+          response_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "question_answers_response_id_fkey"
+            columns: ["response_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_responses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      question_conditions: {
+        Row: {
+          created_at: string | null
+          dependent_question_id: string | null
+          id: string
+          operator: Database["public"]["Enums"]["condition_operator"]
+          question_id: string | null
+          value: string
+        }
+        Insert: {
+          created_at?: string | null
+          dependent_question_id?: string | null
+          id?: string
+          operator: Database["public"]["Enums"]["condition_operator"]
+          question_id?: string | null
+          value: string
+        }
+        Update: {
+          created_at?: string | null
+          dependent_question_id?: string | null
+          id?: string
+          operator?: Database["public"]["Enums"]["condition_operator"]
+          question_id?: string | null
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_conditions_dependent_question_id_fkey"
+            columns: ["dependent_question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "question_conditions_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      question_options: {
+        Row: {
+          created_at: string | null
+          id: string
+          order_index: number
+          question_id: string | null
+          text: string
+          weight: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          order_index: number
+          question_id?: string | null
+          text: string
+          weight?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          order_index?: number
+          question_id?: string | null
+          text?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_options_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      questions: {
+        Row: {
+          created_at: string | null
+          id: string
+          order_index: number
+          quiz_id: string | null
+          required: boolean | null
+          text: string
+          type: Database["public"]["Enums"]["question_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          order_index: number
+          quiz_id?: string | null
+          required?: boolean | null
+          text: string
+          type: Database["public"]["Enums"]["question_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          order_index?: number
+          quiz_id?: string | null
+          required?: boolean | null
+          text?: string
+          type?: Database["public"]["Enums"]["question_type"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_responses: {
+        Row: {
+          completed_at: string | null
+          id: string
+          is_premium: boolean | null
+          profile: string | null
+          quiz_id: string | null
+          score: number | null
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: string
+          is_premium?: boolean | null
+          profile?: string | null
+          quiz_id?: string | null
+          score?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          id?: string
+          is_premium?: boolean | null
+          profile?: string | null
+          quiz_id?: string | null
+          score?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_responses_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quizzes: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          title: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          title: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +277,13 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      condition_operator:
+        | "equals"
+        | "not-equals"
+        | "greater-than"
+        | "less-than"
+        | "contains"
+      question_type: "multiple-choice" | "checkbox" | "open-ended"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +398,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      condition_operator: [
+        "equals",
+        "not-equals",
+        "greater-than",
+        "less-than",
+        "contains",
+      ],
+      question_type: ["multiple-choice", "checkbox", "open-ended"],
+    },
   },
 } as const
