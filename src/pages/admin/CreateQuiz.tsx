@@ -10,6 +10,8 @@ import { ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { EmbedCodeGenerator } from '@/components/EmbedCodeGenerator';
+import { translations } from '@/locales/pt-BR';
 
 const CreateQuiz: React.FC = () => {
   const navigate = useNavigate();
@@ -302,14 +304,14 @@ const CreateQuiz: React.FC = () => {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4">Carregando...</p>
+          <p className="mt-4">{translations.common.loading}</p>
         </div>
       </div>
     );
   }
   
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 pt-16">
       {previewMode !== 'edit' && (
         <Button 
           variant="outline" 
@@ -317,16 +319,22 @@ const CreateQuiz: React.FC = () => {
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar para o Editor
+          {translations.common.back}
         </Button>
       )}
       
       {previewMode === 'edit' && (
-        <QuizEditor 
-          initialQuiz={quiz} 
-          onSave={handleSaveQuiz} 
-          onPreview={handlePreviewQuiz} 
-        />
+        <>
+          <QuizEditor 
+            initialQuiz={quiz} 
+            onSave={handleSaveQuiz} 
+            onPreview={handlePreviewQuiz} 
+          />
+          
+          {quiz.id && (
+            <EmbedCodeGenerator quizId={quiz.id} />
+          )}
+        </>
       )}
       
       {previewMode === 'take' && (

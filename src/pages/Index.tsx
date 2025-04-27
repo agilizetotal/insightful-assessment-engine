@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Home, BookOpen, User, Settings, BarChart4 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { translations } from "@/locales/pt-BR";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -22,46 +23,46 @@ const Index = () => {
       <div className="container mx-auto px-4 py-16">
         <header className="mb-12 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-quiz-primary to-quiz-secondary">
-            Sistema de Avaliação Inteligente
+            {translations.index.title}
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Crie questionários inteligentes com pontuação personalizada, lógica condicional e análise abrangente
+            {translations.index.subtitle}
           </p>
         </header>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           <FeatureCard 
-            title="Criar Questionários"
-            description="Projete avaliações com vários tipos de perguntas, pontuação personalizada e lógica de ramificação"
+            title={translations.index.createQuizzes}
+            description={translations.index.createQuizzesDescription}
             icon={<BookOpen className="h-10 w-10 text-quiz-accent" />}
             link="/admin/create"
           />
           
           <FeatureCard 
-            title="Fazer uma Avaliação"
-            description="Experimente nosso mecanismo de avaliação da perspectiva do usuário"
+            title={translations.index.takeAssessment}
+            description={translations.index.takeAssessmentDescription}
             icon={<User className="h-10 w-10 text-quiz-accent" />}
             link="/quiz/demo"
           />
           
           <FeatureCard 
-            title="Ver Análises"
-            description="Explore ferramentas poderosas de visualização e exportações de resultados"
+            title={translations.index.viewAnalytics}
+            description={translations.index.viewAnalyticsDescription}
             icon={<BarChart4 className="h-10 w-10 text-quiz-accent" />}
             link="/admin/analytics"
           />
           
           <FeatureCard 
-            title="Painel de Administração"
-            description="Gerencie seus questionários, resultados e dados de usuários em um só lugar"
+            title={translations.index.adminPanel}
+            description={translations.index.adminPanelDescription}
             icon={<Home className="h-10 w-10 text-quiz-accent" />}
             link="/admin"
             className="md:col-span-2 lg:col-span-1"
           />
           
           <FeatureCard 
-            title="Configurações"
-            description="Personalize a aparência, integrações e comportamento do seu sistema de avaliação"
+            title={translations.index.settings}
+            description={translations.index.settingsDescription}
             icon={<Settings className="h-10 w-10 text-quiz-accent" />}
             link="/admin/settings"
             className="md:col-span-2 lg:col-span-2"
@@ -69,13 +70,13 @@ const Index = () => {
         </div>
         
         <div className="mt-16 text-center">
-          <h2 className="text-2xl font-bold mb-4">Pronto para começar?</h2>
+          <h2 className="text-2xl font-bold mb-4">{translations.index.getStarted}</h2>
           <div className="flex justify-center gap-4">
             <Button asChild className="bg-quiz-primary hover:bg-quiz-secondary">
-              <Link to="/quiz/demo">Experimentar Questionário Demo</Link>
+              <Link to="/quiz/demo">{translations.index.tryDemo}</Link>
             </Button>
             <Button asChild variant="outline" className="border-quiz-primary text-quiz-primary hover:bg-quiz-light">
-              <Link to="/admin/create">Criar Questionário</Link>
+              <Link to="/admin/create">{translations.index.createQuiz}</Link>
             </Button>
           </div>
         </div>
@@ -98,7 +99,7 @@ const FeatureCard = ({ title, description, icon, link, className = "" }) => {
       </CardContent>
       <CardFooter>
         <Button asChild variant="ghost" className="w-full text-quiz-primary hover:text-quiz-secondary hover:bg-quiz-light">
-          <Link to={link}>Explorar</Link>
+          <Link to={link}>{translations.common.edit}</Link>
         </Button>
       </CardFooter>
     </Card>
