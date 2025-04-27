@@ -131,6 +131,72 @@ const TakeQuiz = () => {
     fetchQuiz();
   }, [quizId]);
   
+  const evaluateCondition = (
+    condition: {
+      created_at: string;
+      dependent_question_id: string;
+      id: string;
+      operator: "equals" | "not-equals" | "greater-than" | "less-than" | "contains";
+      question_id: string;
+      value: string;
+      logical_operator?: "AND" | "OR";
+    },
+    answers: Record<string, any>
+  ): boolean => {
+    const dependentAnswer = answers[condition.dependent_question_id];
+    const conditionValue = condition.value;
+    
+    switch (condition.operator) {
+      case "equals":
+        return dependentAnswer === conditionValue;
+      case "not-equals":
+        return dependentAnswer !== conditionValue;
+      case "greater-than":
+        return Number(dependentAnswer) > Number(conditionValue);
+      case "less-than":
+        return Number(dependentAnswer) < Number(conditionValue);
+      case "contains":
+        return dependentAnswer?.includes(conditionValue);
+      default:
+        return false;
+    }
+  };
+  
+  const evaluateConditions = (
+    conditions: {
+      created_at: string;
+      dependent_question_id: string;
+      id: string;
+      operator: "equals" | "not-equals" | "greater-than" | "less-than" | "contains";
+      question_id: string;
+      value: string;
+      logical_operator?: "AND" | "OR";
+    }[],
+    answers: Record<string, any>
+  ): boolean => {
+    if (!conditions || conditions.length === 0) return true;
+    
+    const defaultLogicalOperator = "AND";
+    
+    if (conditions.length === 1) {
+      return evaluateCondition(conditions[0], answers);
+    }
+    
+    return conditions.reduce((result, condition, index) => {
+      const conditionResult = evaluateCondition(condition, answers);
+      
+      if (index === 0) return conditionResult;
+      
+      const logicalOperator = conditions[index].logical_operator || defaultLogicalOperator;
+      
+      if (logicalOperator === "AND") {
+        return result && conditionResult;
+      } else { // OR
+        return result || conditionResult;
+      }
+    }, true);
+  };
+  
   const handleCompleteQuiz = async (quizResponses: QuizResponse[], userDataInput: UserData) => {
     setResponses(quizResponses);
     setUserData(userDataInput);

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,7 +64,7 @@ const AdminDashboard = () => {
         user_data,
         quizzes:quiz_id (title)
       `)
-        .eq('user_id', user.id)
+        .eq('user_id', user?.id)
         .order('completed_at', { ascending: false })
         .limit(5);
 
@@ -77,7 +76,7 @@ const AdminDashboard = () => {
       }
 
       // Safely map the data with type checking
-      const formattedResponses = (responseData || []).map((item: DatabaseResponse) => {
+      const formattedResponses = (responseData as DatabaseResponse[] || []).map((item: DatabaseResponse) => {
         // Safe way to handle potentially missing data
         return {
           id: item?.id || '',
@@ -108,7 +107,7 @@ const AdminDashboard = () => {
       const { data, error } = await supabase
         .from('quiz_responses')
         .select('completed_at')
-        .eq('user_id', user.id);
+        .eq('user_id', user?.id);
 
       if (error) {
         throw error;
