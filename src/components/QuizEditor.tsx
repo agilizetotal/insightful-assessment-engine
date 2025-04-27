@@ -1,50 +1,17 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
-import { 
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Switch } from "@/components/ui/switch";
-import { 
-  Plus, 
-  Trash, 
-  MoveUp, 
-  MoveDown, 
-  CopyPlus, 
-  Save, 
-  Play
-} from "lucide-react";
-import { Quiz, Question, Option, ProfileRange, QuestionType, Condition } from "@/types/quiz";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card } from "@/components/ui/card";
+import { Plus, Save, Play } from "lucide-react";
+import { Quiz, Question } from "@/types/quiz";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { translations } from "@/locales/pt-BR";
+import { GeneralSettings } from "./quiz-editor/GeneralSettings";
+import { ProfileRanges } from "./quiz-editor/ProfileRanges";
+import { QuestionConditions } from "./quiz-editor/QuestionConditions";
+import { defaultQuestion, defaultOption } from "./quiz-editor/defaults";
 
 interface QuizEditorProps {
   initialQuiz?: Quiz;
@@ -52,35 +19,6 @@ interface QuizEditorProps {
   onPreview: (quiz: Quiz) => void;
   isNewQuiz?: boolean;
 }
-
-const defaultQuestion: Question = {
-  id: '',
-  text: '',
-  type: 'multiple-choice',
-  options: [],
-  required: true,
-  conditions: []
-};
-
-const defaultOption: Option = {
-  id: '',
-  text: '',
-  weight: 0
-};
-
-const defaultCondition: Condition = {
-  questionId: '',
-  operator: 'equals',
-  value: '',
-  logical_operator: 'AND'
-};
-
-const defaultProfileRange: ProfileRange = {
-  min: 0,
-  max: 0,
-  profile: '',
-  description: ''
-};
 
 const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview, isNewQuiz = false }) => {
   const [quiz, setQuiz] = useState<Quiz>(initialQuiz || {
@@ -94,7 +32,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview,
   });
   const [isSaving, setIsSaving] = useState(false);
   const { user } = useAuth();
-  
+
   const addQuestion = () => {
     const newQuestion = {
       ...defaultQuestion,
@@ -435,16 +373,12 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview,
     }
   };
   
-  const handlePreview = () => {
-    onPreview(quiz);
-  };
-  
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">{translations.quiz.editor}</h1>
         <div className="space-x-2">
-          <Button onClick={handlePreview} variant="outline" disabled={isSaving}>
+          <Button onClick={() => onPreview(quiz)} variant="outline" disabled={isSaving}>
             <Play className="h-4 w-4 mr-2" />
             {translations.common.preview}
           </Button>
@@ -463,34 +397,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview,
         </TabsList>
         
         <TabsContent value="general">
-          <Card>
-            <CardHeader>
-              <CardTitle>{translations.quiz.settings}</CardTitle>
-              <CardDescription>{translations.quiz.settingsDescription}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">{translations.quiz.titleLabel}</Label>
-                <Input 
-                  id="title" 
-                  value={quiz.title} 
-                  onChange={(e) => setQuiz({...quiz, title: e.target.value})}
-                  placeholder={translations.quiz.titlePlaceholder}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="description">{translations.quiz.descriptionLabel}</Label>
-                <Textarea 
-                  id="description" 
-                  value={quiz.description} 
-                  onChange={(e) => setQuiz({...quiz, description: e.target.value})}
-                  placeholder={translations.quiz.descriptionPlaceholder}
-                  rows={4}
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <GeneralSettings quiz={quiz} onUpdate={setQuiz} />
         </TabsContent>
         
         <TabsContent value="questions">
@@ -815,96 +722,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview,
         </TabsContent>
         
         <TabsContent value="profiles">
-          <Card>
-            <CardHeader>
-              <CardTitle>{translations.quiz.profileDefinitions}</CardTitle>
-              <CardDescription>
-                {translations.quiz.profileDefinitionsDescription}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {quiz.profileRanges.map((range, index) => (
-                <div key={index} className="p-4 border rounded-md space-y-3">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-medium">{translations.quiz.profile} {index + 1}</h3>
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      className="text-red-500 hover:text-red-700"
-                      onClick={() => removeProfileRange(index)}
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor={`min-${index}`}>{translations.quiz.minScore}</Label>
-                      <Input 
-                        id={`min-${index}`} 
-                        type="number" 
-                        value={range.min} 
-                        onChange={(e) => updateProfileRange(index, {
-                          ...range, 
-                          min: parseInt(e.target.value) || 0
-                        })}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor={`max-${index}`}>{translations.quiz.maxScore}</Label>
-                      <Input 
-                        id={`max-${index}`} 
-                        type="number" 
-                        value={range.max} 
-                        onChange={(e) => updateProfileRange(index, {
-                          ...range, 
-                          max: parseInt(e.target.value) || 0
-                        })}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor={`profile-${index}`}>{translations.quiz.profileName}</Label>
-                    <Input 
-                      id={`profile-${index}`} 
-                      value={range.profile} 
-                      onChange={(e) => updateProfileRange(index, {
-                        ...range, 
-                        profile: e.target.value
-                      })}
-                      placeholder={translations.quiz.profileNamePlaceholder}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor={`description-${index}`}>{translations.quiz.profileDescription}</Label>
-                    <Textarea 
-                      id={`description-${index}`} 
-                      value={range.description} 
-                      onChange={(e) => updateProfileRange(index, {
-                        ...range, 
-                        description: e.target.value
-                      })}
-                      placeholder={translations.quiz.profileDescriptionPlaceholder}
-                      rows={3}
-                    />
-                  </div>
-                </div>
-              ))}
-              
-              <Button onClick={addProfileRange} variant="outline" className="w-full">
-                <Plus className="h-4 w-4 mr-2" />
-                {translations.quiz.addProfileRange}
-              </Button>
-            </CardContent>
-            <CardFooter className="bg-gray-50 text-sm text-gray-500">
-              <p>
-                {translations.quiz.profileRangeExplanation}
-              </p>
-            </CardFooter>
-          </Card>
+          <ProfileRanges quiz={quiz} onUpdate={setQuiz} />
         </TabsContent>
       </Tabs>
     </div>
