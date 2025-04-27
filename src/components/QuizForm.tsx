@@ -157,41 +157,41 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
       <div className="max-w-2xl mx-auto py-8">
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl">{translations.quiz.userDataTitle}</CardTitle>
-            <CardDescription>{translations.quiz.userDataDescription}</CardDescription>
+            <CardTitle className="text-xl">Seus dados</CardTitle>
+            <CardDescription>Preencha seus dados para iniciar o questionário</CardDescription>
           </CardHeader>
           
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">{translations.quiz.nameLabel} *</Label>
+              <Label htmlFor="name">Nome completo *</Label>
               <Input
                 id="name"
                 value={userData.name}
                 onChange={(e) => setUserData({ ...userData, name: e.target.value })}
-                placeholder={translations.quiz.namePlaceholder}
+                placeholder="Digite seu nome completo"
                 required
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="email">{translations.quiz.emailLabel} *</Label>
+              <Label htmlFor="email">E-mail *</Label>
               <Input
                 id="email"
                 type="email"
                 value={userData.email}
                 onChange={(e) => setUserData({ ...userData, email: e.target.value })}
-                placeholder={translations.quiz.emailPlaceholder}
+                placeholder="Digite seu e-mail"
                 required
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="phone">{translations.quiz.phoneLabel}</Label>
+              <Label htmlFor="phone">Telefone</Label>
               <Input
                 id="phone"
                 value={userData.phone}
                 onChange={(e) => setUserData({ ...userData, phone: e.target.value })}
-                placeholder={translations.quiz.phonePlaceholder}
+                placeholder="Digite seu telefone"
               />
             </div>
           </CardContent>
@@ -202,7 +202,7 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
               disabled={!userData.name || !userData.email}
               className="w-full"
             >
-              {translations.quiz.startQuiz}
+              Iniciar questionário
             </Button>
           </CardFooter>
         </Card>
@@ -215,10 +215,10 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
       <div className="max-w-2xl mx-auto py-8 text-center">
         {activeQuestions.length === 0 ? (
           <div>
-            <h2 className="text-xl font-semibold mb-2">{translations.quiz.noQuestionsAvailable}</h2>
-            <p className="text-gray-500 mb-4">{translations.quiz.noQuestionsMessage}</p>
+            <h2 className="text-xl font-semibold mb-2">Nenhuma questão disponível</h2>
+            <p className="text-gray-500 mb-4">Não existem questões que atendam aos critérios atuais</p>
             <Button onClick={() => onComplete(responses, userData)}>
-              {translations.quiz.finishAnyway}
+              Finalizar mesmo assim
             </Button>
           </div>
         ) : (
@@ -237,7 +237,7 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
       <div className="mb-6">
         <Progress value={progress} className="h-2" />
         <div className="text-right text-sm text-gray-500 mt-1">
-          {translations.quiz.questionNumberOf.replace('{current}', (currentQuestionIndex + 1).toString()).replace('{total}', activeQuestions.length.toString())}
+          Questão {currentQuestionIndex + 1} de {activeQuestions.length}
         </div>
       </div>
       
@@ -245,7 +245,7 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
         <CardHeader>
           <CardTitle className="text-xl">{currentQuestion.text}</CardTitle>
           {currentQuestion.required && (
-            <CardDescription>{translations.quiz.requiredQuestionHint}</CardDescription>
+            <CardDescription>Esta questão é obrigatória</CardDescription>
           )}
         </CardHeader>
         
@@ -307,7 +307,7 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
           
           {currentQuestion.type === 'open-ended' && (
             <Textarea
-              placeholder={translations.quiz.openEndedPlaceholder}
+              placeholder="Digite sua resposta aqui..."
               value={
                 responses.find(r => r.questionId === currentQuestion.id)?.answer as string || ''
               }

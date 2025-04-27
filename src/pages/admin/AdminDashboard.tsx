@@ -1,10 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "lucide-react";
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { AreaChart } from '@/components/AreaChart';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,6 +18,22 @@ interface Response {
   name: string;
   email: string;
   phone: string;
+}
+
+interface DatabaseResponse {
+  id: string;
+  quiz_id: string;
+  score: number;
+  profile: string;
+  completed_at: string;
+  user_data: {
+    name: string;
+    email: string;
+    phone: string;
+  } | null;
+  quizzes: {
+    title: string;
+  } | null;
 }
 
 const AdminDashboard = () => {
@@ -54,37 +69,37 @@ const AdminDashboard = () => {
         .order('completed_at', { ascending: false })
         .limit(5);
 
-    if (error) {
-      console.error("Error loading responses:", error);
-      toast.error("Erro ao carregar respostas");
+      if (error) {
+        console.error("Error loading responses:", error);
+        toast.error("Erro ao carregar respostas");
+        setResponses([]);
+        return;
+      }
+
+      // Safely map the data with type checking
+      const formattedResponses = (responseData || []).map((item: DatabaseResponse) => {
+        // Safe way to handle potentially missing data
+        return {
+          id: item?.id || '',
+          quizTitle: item?.quizzes?.title || 'Quiz desconhecido',
+          date: item?.completed_at ? new Date(item.completed_at).toLocaleDateString() : '-',
+          profile: item?.profile || 'Perfil desconhecido',
+          // Safely access potentially missing user_data
+          name: item?.user_data?.name || 'Usuário anônimo',
+          email: item?.user_data?.email || '-',
+          phone: item?.user_data?.phone || '-',
+        };
+      });
+
+      setResponses(formattedResponses);
+    } catch (err) {
+      console.error("Error in loadResponses:", err);
+      toast.error("Erro ao processar respostas");
       setResponses([]);
-      return;
+    } finally {
+      setLoadingResponses(false);
     }
-
-    // Safely map the data with type checking
-    const formattedResponses = responseData.map(item => {
-      // Safe way to handle potentially missing data
-      return {
-        id: item?.id || '',
-        quizTitle: item?.quizzes?.title || 'Quiz desconhecido',
-        date: item?.completed_at ? new Date(item.completed_at).toLocaleDateString() : '-',
-        profile: item?.profile || 'Perfil desconhecido',
-        // Safely access potentially missing user_data
-        name: item?.user_data?.name || 'Usuário anônimo',
-        email: item?.user_data?.email || '-',
-        phone: item?.user_data?.phone || '-',
-      };
-    });
-
-    setResponses(formattedResponses);
-  } catch (err) {
-    console.error("Error in loadResponses:", err);
-    toast.error("Erro ao processar respostas");
-    setResponses([]);
-  } finally {
-    setLoadingResponses(false);
-  }
-};
+  };
 
   const loadAnalytics = async () => {
     setLoadingAnalytics(true);
@@ -99,10 +114,17 @@ const AdminDashboard = () => {
         throw error;
       }
 
+      if (!data) {
+        setAnalyticsData([]);
+        return;
+      }
+
       // Process the data to count responses per day
-      const dailyCounts = data.reduce((acc, item) => {
-        const date = format(new Date(item.completed_at), 'yyyy-MM-dd');
-        acc[date] = (acc[date] || 0) + 1;
+      const dailyCounts = data.reduce((acc: Record<string, number>, item) => {
+        if (item.completed_at) {
+          const date = format(new Date(item.completed_at), 'yyyy-MM-dd');
+          acc[date] = (acc[date] || 0) + 1;
+        }
         return acc;
       }, {});
 
@@ -116,6 +138,7 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error("Erro ao carregar dados de análise:", error);
       toast.error("Erro ao carregar dados de análise");
+      setAnalyticsData([]);
     } finally {
       setLoadingAnalytics(false);
     }
@@ -144,7 +167,7 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent>
             {loadingResponses ? (
-              <p>{translations.common.loading}...</p>
+              <p>{translations.common.loading}</p>
             ) : responses.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="min-w-full">
@@ -184,14 +207,14 @@ const AdminDashboard = () => {
         <Card>
           <CardHeader>
             <CardTitle>{translations.dashboard.stats.title}</CardTitle>
-            <CardContent>
-              {loadingAnalytics ? (
-                <p>{translations.common.loading}...</p>
-              ) : (
-                <AreaChart data={analyticsData} />
-              )}
-            </CardContent>
           </CardHeader>
+          <CardContent>
+            {loadingAnalytics ? (
+              <p>{translations.common.loading}</p>
+            ) : (
+              <AreaChart data={analyticsData} />
+            )}
+          </CardContent>
         </Card>
       </div>
     </div>

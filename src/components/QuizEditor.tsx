@@ -373,21 +373,21 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview,
               .delete()
               .eq('dependent_question_id', question.id);
               
-            const conditionsToInsert = question.conditions.map((condition) => ({
-              id: crypto.randomUUID(),
-              question_id: condition.questionId,
-              dependent_question_id: question.id,
-              operator: condition.operator,
-              value: String(condition.value),
-              logical_operator: condition.logicalOperator || 'AND'
-            }));
-            
-            const { error: conditionsError } = await supabase
-              .from('question_conditions')
-              .insert(conditionsToInsert);
-            
-            if (conditionsError) {
-              throw conditionsError;
+            for (const condition of question.conditions) {
+              const { error: conditionError } = await supabase
+                .from('question_conditions')
+                .insert({
+                  id: crypto.randomUUID(),
+                  question_id: condition.questionId,
+                  dependent_question_id: question.id,
+                  operator: condition.operator,
+                  value: String(condition.value),
+                  logical_operator: condition.logicalOperator || 'AND'
+                });
+                
+              if (conditionError) {
+                throw conditionError;
+              }
             }
           }
         }

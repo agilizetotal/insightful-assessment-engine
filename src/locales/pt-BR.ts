@@ -10,11 +10,14 @@ export const translations = {
     delete: "Excluir",
     back: "Voltar",
     next: "Próximo",
+    previous: "Anterior",
     submit: "Enviar",
+    complete: "Concluir",
     backToHome: "Voltar para o início",
     saveQuiz: "Salvar questionário",
     saving: "Salvando...",
-    preview: "Visualizar"
+    preview: "Visualizar",
+    copyCode: "Copiar código"
   },
   auth: {
     loginRequired: "Login necessário para continuar",
@@ -43,6 +46,7 @@ export const translations = {
     searchQuizzes: "Buscar questionários",
     totalResponses: "Total de respostas",
     stats: {
+      title: "Estatísticas",
       quizzes: "Questionários",
       responses: "Respostas",
       completionRate: "Taxa de conclusão"
@@ -70,6 +74,7 @@ export const translations = {
     checkboxes: "Caixas de seleção",
     openEnded: "Resposta aberta",
     requiredQuestion: "Questão obrigatória",
+    requiredQuestionHint: "Esta questão é obrigatória",
     general: "Geral",
     settings: "Configurações",
     settingsDescription: "Configure as informações básicas do questionário",
@@ -119,7 +124,25 @@ export const translations = {
     retakeQuiz: "Refazer questionário",
     emailFunctionInfo: "Em um aplicativo real, isso enviaria um e-mail com os resultados",
     upgradingInfo: "Em um aplicativo real, isso mostraria o fluxo de pagamento",
-    upgradeComplete: "Upgrade concluído com sucesso"
+    upgradeComplete: "Upgrade concluído com sucesso",
+    copySuccess: "Código copiado para a área de transferência",
+    embedDescription: "Use este código para incorporar o questionário em seu site",
+    // User data form texts
+    userDataTitle: "Seus dados",
+    userDataDescription: "Preencha seus dados para iniciar o questionário",
+    nameLabel: "Nome completo",
+    namePlaceholder: "Digite seu nome completo",
+    emailLabel: "E-mail",
+    emailPlaceholder: "Digite seu e-mail",
+    phoneLabel: "Telefone",
+    phonePlaceholder: "Digite seu telefone",
+    startQuiz: "Iniciar questionário",
+    // Quiz form texts
+    noQuestionsAvailable: "Nenhuma questão disponível",
+    noQuestionsMessage: "Não existem questões que atendam aos critérios atuais",
+    finishAnyway: "Finalizar mesmo assim",
+    questionNumberOf: "Questão {current} de {total}",
+    openEndedPlaceholder: "Digite sua resposta aqui..."
   },
   index: {
     title: "Sistema de Questionários",
