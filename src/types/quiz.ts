@@ -1,4 +1,3 @@
-
 export type QuestionType = 'multiple-choice' | 'checkbox' | 'open-ended';
 
 export interface Option {
@@ -10,7 +9,7 @@ export interface Option {
 export interface Condition {
   questionId: string;
   operator: 'equals' | 'not-equals' | 'greater-than' | 'less-than' | 'contains';
-  value: string;  // Changed from string | number to string to match Supabase schema
+  value: string;
   logicalOperator?: 'AND' | 'OR';
 }
 
