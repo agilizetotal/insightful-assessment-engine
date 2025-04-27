@@ -6,12 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from 'react-router-dom';
 
 export const AuthCard = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,8 +25,8 @@ export const AuthCard = () => {
         });
         if (error) throw error;
         toast({
-          title: "Success!",
-          description: "Please check your email to verify your account.",
+          title: "Sucesso!",
+          description: "Por favor, verifique seu e-mail para confirmar sua conta.",
         });
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -33,14 +35,15 @@ export const AuthCard = () => {
         });
         if (error) throw error;
         toast({
-          title: "Welcome back!",
-          description: "Successfully signed in.",
+          title: "Bem-vindo de volta!",
+          description: "Login realizado com sucesso.",
         });
+        navigate('/admin');
       }
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Error",
+        title: "Erro",
         description: error.message,
       });
     }
@@ -49,11 +52,11 @@ export const AuthCard = () => {
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle>{isSignUp ? 'Create Account' : 'Sign In'}</CardTitle>
+        <CardTitle>{isSignUp ? 'Criar Conta' : 'Entrar'}</CardTitle>
         <CardDescription>
           {isSignUp 
-            ? 'Create a new account to start creating and taking quizzes'
-            : 'Sign in to your account to continue'
+            ? 'Crie uma nova conta para começar a criar e fazer questionários'
+            : 'Entre na sua conta para continuar'
           }
         </CardDescription>
       </CardHeader>
@@ -64,18 +67,18 @@ export const AuthCard = () => {
             <Input
               id="email"
               type="email"
-              placeholder="Enter your email"
+              placeholder="Digite seu email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Senha</Label>
             <Input
               id="password"
               type="password"
-              placeholder="Enter your password"
+              placeholder="Digite sua senha"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -84,7 +87,7 @@ export const AuthCard = () => {
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
           <Button type="submit" className="w-full">
-            {isSignUp ? 'Sign Up' : 'Sign In'}
+            {isSignUp ? 'Cadastrar' : 'Entrar'}
           </Button>
           <Button 
             type="button" 
@@ -93,8 +96,8 @@ export const AuthCard = () => {
             onClick={() => setIsSignUp(!isSignUp)}
           >
             {isSignUp 
-              ? 'Already have an account? Sign In' 
-              : "Don't have an account? Sign Up"
+              ? 'Já possui uma conta? Faça login' 
+              : "Não tem uma conta? Cadastre-se"
             }
           </Button>
         </CardFooter>

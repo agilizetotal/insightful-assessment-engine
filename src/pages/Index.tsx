@@ -1,56 +1,67 @@
 
-import { useState } from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Home, BookOpen, User, Settings, BarChart4 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Se não estiver carregando e o usuário não estiver logado, redirecionar para a página de login
+    if (!loading && !user) {
+      navigate("/auth");
+    }
+  }, [loading, user, navigate]);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white">
       <div className="container mx-auto px-4 py-16">
         <header className="mb-12 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-quiz-primary to-quiz-secondary">
-            Insightful Assessment Engine
+            Sistema de Avaliação Inteligente
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Create intelligent quizzes with customized scoring, conditional logic, and comprehensive analysis
+            Crie questionários inteligentes com pontuação personalizada, lógica condicional e análise abrangente
           </p>
         </header>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           <FeatureCard 
-            title="Create Smart Quizzes"
-            description="Design assessments with multiple question types, custom scoring, and branching logic"
+            title="Criar Questionários"
+            description="Projete avaliações com vários tipos de perguntas, pontuação personalizada e lógica de ramificação"
             icon={<BookOpen className="h-10 w-10 text-quiz-accent" />}
             link="/admin/create"
           />
           
           <FeatureCard 
-            title="Take an Assessment"
-            description="Experience our assessment engine from the user perspective"
+            title="Fazer uma Avaliação"
+            description="Experimente nosso mecanismo de avaliação da perspectiva do usuário"
             icon={<User className="h-10 w-10 text-quiz-accent" />}
             link="/quiz/demo"
           />
           
           <FeatureCard 
-            title="View Analytics"
-            description="Explore powerful visualization tools and result exports"
+            title="Ver Análises"
+            description="Explore ferramentas poderosas de visualização e exportações de resultados"
             icon={<BarChart4 className="h-10 w-10 text-quiz-accent" />}
             link="/admin/analytics"
           />
           
           <FeatureCard 
-            title="Admin Dashboard"
-            description="Manage your quizzes, results, and user data in one place"
+            title="Painel de Administração"
+            description="Gerencie seus questionários, resultados e dados de usuários em um só lugar"
             icon={<Home className="h-10 w-10 text-quiz-accent" />}
             link="/admin"
             className="md:col-span-2 lg:col-span-1"
           />
           
           <FeatureCard 
-            title="Configure Settings"
-            description="Customize the appearance, integrations, and behavior of your assessment engine"
+            title="Configurações"
+            description="Personalize a aparência, integrações e comportamento do seu sistema de avaliação"
             icon={<Settings className="h-10 w-10 text-quiz-accent" />}
             link="/admin/settings"
             className="md:col-span-2 lg:col-span-2"
@@ -58,13 +69,13 @@ const Index = () => {
         </div>
         
         <div className="mt-16 text-center">
-          <h2 className="text-2xl font-bold mb-4">Ready to get started?</h2>
+          <h2 className="text-2xl font-bold mb-4">Pronto para começar?</h2>
           <div className="flex justify-center gap-4">
             <Button asChild className="bg-quiz-primary hover:bg-quiz-secondary">
-              <Link to="/quiz/demo">Try a Demo Quiz</Link>
+              <Link to="/quiz/demo">Experimentar Questionário Demo</Link>
             </Button>
             <Button asChild variant="outline" className="border-quiz-primary text-quiz-primary hover:bg-quiz-light">
-              <Link to="/admin/create">Create Quiz</Link>
+              <Link to="/admin/create">Criar Questionário</Link>
             </Button>
           </div>
         </div>
@@ -87,7 +98,7 @@ const FeatureCard = ({ title, description, icon, link, className = "" }) => {
       </CardContent>
       <CardFooter>
         <Button asChild variant="ghost" className="w-full text-quiz-primary hover:text-quiz-secondary hover:bg-quiz-light">
-          <Link to={link}>Explore</Link>
+          <Link to={link}>Explorar</Link>
         </Button>
       </CardFooter>
     </Card>
