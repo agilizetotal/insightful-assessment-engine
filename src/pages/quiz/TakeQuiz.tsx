@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import QuizForm from "@/components/QuizForm";
@@ -9,8 +8,6 @@ import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { translations } from "@/locales/pt-BR";
-
-// Removed demo quiz data - will be loaded from database
 
 const TakeQuiz = () => {
   const { quizId } = useParams();
@@ -34,7 +31,6 @@ const TakeQuiz = () => {
           return;
         }
         
-        // Fetch quiz data from Supabase
         const { data: quizData, error: quizError } = await supabase
           .from('quizzes')
           .select('*')
@@ -45,7 +41,6 @@ const TakeQuiz = () => {
           throw quizError;
         }
         
-        // Fetch questions for the quiz
         const { data: questionsData, error: questionsError } = await supabase
           .from('questions')
           .select('*')
@@ -56,7 +51,6 @@ const TakeQuiz = () => {
           throw questionsError;
         }
         
-        // For each question, fetch its options
         const questionsWithOptions = await Promise.all(questionsData.map(async (question) => {
           const { data: optionsData, error: optionsError } = await supabase
             .from('question_options')
@@ -73,7 +67,6 @@ const TakeQuiz = () => {
             };
           }
           
-          // Fetch conditions for the question
           const { data: conditionsData, error: conditionsError } = await supabase
             .from('question_conditions')
             .select('*')
@@ -97,12 +90,11 @@ const TakeQuiz = () => {
               questionId: cond.question_id,
               operator: cond.operator as any,
               value: cond.value,
-              logicalOperator: cond.logical_operator as 'AND' | 'OR'
+              logicalOperator: (cond.logical_operator as 'AND' | 'OR') || 'AND'
             })) : []
           };
         }));
         
-        // Fetch profile ranges for the quiz
         const { data: rangesData, error: rangesError } = await supabase
           .from('profile_ranges')
           .select('*')
@@ -112,7 +104,6 @@ const TakeQuiz = () => {
           console.error("Erro ao carregar faixas de perfil:", rangesError);
         }
         
-        // Create the complete quiz object
         const loadedQuiz: Quiz = {
           id: quizData.id,
           title: quizData.title,
@@ -146,7 +137,6 @@ const TakeQuiz = () => {
     
     if (!quiz) return;
     
-    // Calculate score based on responses
     let totalScore = 0;
     
     quizResponses.forEach(response => {
@@ -169,12 +159,10 @@ const TakeQuiz = () => {
       }
     });
     
-    // Determine profile based on score
     const profileRange = quiz.profileRanges.find(range => 
       totalScore >= range.min && totalScore <= range.max
     );
     
-    // Create result object
     const result: QuizResult = {
       quizId: quiz.id,
       responses: quizResponses,
@@ -185,7 +173,6 @@ const TakeQuiz = () => {
       userData: userDataInput
     };
     
-    // Save results to Supabase
     try {
       const { data: responseData, error: responseError } = await supabase
         .from('quiz_responses')
@@ -207,7 +194,6 @@ const TakeQuiz = () => {
         throw responseError;
       }
 
-      // Save individual question responses
       if (responseData) {
         const answersToInsert = quizResponses.map(response => ({
           response_id: responseData.id,
@@ -241,7 +227,6 @@ const TakeQuiz = () => {
   const handleUpgrade = () => {
     toast.info(translations.quiz.upgradingInfo);
     
-    // Simulate upgrade to premium
     setTimeout(() => {
       if (quizResult) {
         setQuizResult({

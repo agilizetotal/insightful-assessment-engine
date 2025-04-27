@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -233,7 +232,11 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview,
   const updateCondition = (questionIndex: number, conditionIndex: number, updatedCondition: Condition) => {
     const question = quiz.questions[questionIndex];
     const updatedConditions = [...(question.conditions || [])];
-    updatedConditions[conditionIndex] = updatedCondition;
+    
+    updatedConditions[conditionIndex] = {
+      ...updatedCondition,
+      value: String(updatedCondition.value)
+    };
     
     updateQuestion(questionIndex, {
       ...question,
@@ -364,26 +367,25 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview,
             }
           }
           
-          // Save conditions for questions
           if (question.conditions && question.conditions.length > 0) {
             await supabase
               .from('question_conditions')
               .delete()
               .eq('dependent_question_id', question.id);
               
-            const conditionsToInsert = question.conditions.map((condition, index) => ({
+            const conditionsToInsert = question.conditions.map((condition) => ({
               id: crypto.randomUUID(),
               question_id: condition.questionId,
               dependent_question_id: question.id,
               operator: condition.operator,
-              value: condition.value,
+              value: String(condition.value),
               logical_operator: condition.logicalOperator || 'AND'
             }));
             
             const { error: conditionsError } = await supabase
               .from('question_conditions')
               .insert(conditionsToInsert);
-              
+            
             if (conditionsError) {
               throw conditionsError;
             }

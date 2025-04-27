@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,37 +31,37 @@ const Index = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           <FeatureCard 
-            title={translations.index.createQuizzes}
-            description={translations.index.createQuizzesDescription}
+            title={translations.index?.createQuizzes || 'Criar Questionários'}
+            description={translations.index?.createQuizzesDescription || 'Crie questionários personalizados para avaliar perfis e coletar informações.'}
             icon={<BookOpen className="h-10 w-10 text-quiz-accent" />}
             link="/admin/create"
           />
           
           <FeatureCard 
-            title={translations.index.takeAssessment}
-            description={translations.index.takeAssessmentDescription}
+            title={translations.index?.takeAssessment || 'Fazer Avaliação'}
+            description={translations.index?.takeAssessmentDescription || 'Responda questionários e descubra seu perfil com base nas respostas.'}
             icon={<User className="h-10 w-10 text-quiz-accent" />}
             link="/quiz/demo"
           />
           
           <FeatureCard 
-            title={translations.index.viewAnalytics}
-            description={translations.index.viewAnalyticsDescription}
+            title={translations.index?.viewAnalytics || 'Ver Análises'}
+            description={translations.index?.viewAnalyticsDescription || 'Analise os resultados e obtenha insights das respostas dos questionários.'}
             icon={<BarChart4 className="h-10 w-10 text-quiz-accent" />}
             link="/admin/analytics"
           />
           
           <FeatureCard 
-            title={translations.index.adminPanel}
-            description={translations.index.adminPanelDescription}
+            title={translations.index?.adminPanel || 'Painel Admin'}
+            description={translations.index?.adminPanelDescription || 'Gerencie todos os seus questionários e veja os resultados.'}
             icon={<Home className="h-10 w-10 text-quiz-accent" />}
             link="/admin"
             className="md:col-span-2 lg:col-span-1"
           />
           
           <FeatureCard 
-            title={translations.index.settings}
-            description={translations.index.settingsDescription}
+            title={translations.index?.settings || 'Configurações'}
+            description={translations.index?.settingsDescription || 'Personalize suas preferências e configure sua conta.'}
             icon={<Settings className="h-10 w-10 text-quiz-accent" />}
             link="/admin/settings"
             className="md:col-span-2 lg:col-span-2"
@@ -70,13 +69,13 @@ const Index = () => {
         </div>
         
         <div className="mt-16 text-center">
-          <h2 className="text-2xl font-bold mb-4">{translations.index.getStarted}</h2>
+          <h2 className="text-2xl font-bold mb-4">{translations.index?.getStarted || 'Comece agora'}</h2>
           <div className="flex justify-center gap-4">
             <Button asChild className="bg-quiz-primary hover:bg-quiz-secondary">
-              <Link to="/quiz/demo">{translations.index.tryDemo}</Link>
+              <Link to="/quiz/demo">{translations.index?.tryDemo || 'Experimentar Demo'}</Link>
             </Button>
             <Button asChild variant="outline" className="border-quiz-primary text-quiz-primary hover:bg-quiz-light">
-              <Link to="/admin/create">{translations.index.createQuiz}</Link>
+              <Link to="/admin/create">{translations.index?.createQuiz || 'Criar Questionário'}</Link>
             </Button>
           </div>
         </div>

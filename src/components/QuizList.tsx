@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { 
@@ -52,11 +51,10 @@ export function QuizList() {
 
       if (error) throw error;
 
-      // Formatar os dados para incluir contagem de respostas
       const formattedData = data.map(quiz => ({
         ...quiz,
         responses: quiz.quiz_responses?.[0]?.count || 0,
-        status: 'active' // Podemos adicionar status depois
+        status: 'active'
       }));
 
       setQuizzes(formattedData);
@@ -70,11 +68,9 @@ export function QuizList() {
 
   const deleteQuiz = async (id) => {
     try {
-      // Primeiro, excluir todas as respostas e perguntas relacionadas
       await supabase.from('quiz_responses').delete().eq('quiz_id', id);
       await supabase.from('profile_ranges').delete().eq('quiz_id', id);
       
-      // Buscar perguntas para excluir opções associadas
       const { data: questions } = await supabase
         .from('questions')
         .select('id')
@@ -83,21 +79,17 @@ export function QuizList() {
       if (questions && questions.length > 0) {
         const questionIds = questions.map(q => q.id);
         
-        // Excluir opções das perguntas
         await supabase.from('question_options').delete().in('question_id', questionIds);
         
-        // Excluir perguntas
         await supabase.from('questions').delete().eq('quiz_id', id);
       }
       
-      // Finalmente, excluir o quiz
       const { error } = await supabase.from('quizzes').delete().eq('id', id);
       
       if (error) throw error;
       
       toast.success("Questionário excluído com sucesso");
       
-      // Atualizar a lista
       setQuizzes(quizzes.filter(quiz => quiz.id !== id));
     } catch (error) {
       console.error("Erro ao excluir questionário:", error);
@@ -105,7 +97,6 @@ export function QuizList() {
     }
   };
 
-  // Filtrar questionários com base na busca
   const filteredQuizzes = quizzes.filter(quiz => 
     quiz.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -122,12 +113,12 @@ export function QuizList() {
     <Card className="overflow-hidden">
       <div className="p-4 bg-white">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
-          <h3 className="text-lg font-medium">{translations.dashboard.yourQuizzes}</h3>
+          <h3 className="text-lg font-medium">{translations.dashboard?.yourQuizzes || 'Seus Questionários'}</h3>
           <div className="relative mt-2 md:mt-0">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
             <Input
               type="search"
-              placeholder={translations.dashboard.searchQuizzes}
+              placeholder={translations.dashboard?.searchQuizzes || 'Buscar questionários'}
               className="pl-8 w-full md:w-[250px]"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -142,7 +133,7 @@ export function QuizList() {
               <TableRow>
                 <TableHead>{translations.quiz.title}</TableHead>
                 <TableHead>Data de criação</TableHead>
-                <TableHead>{translations.dashboard.totalResponses}</TableHead>
+                <TableHead>{translations.dashboard?.totalResponses || 'Total de respostas'}</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>

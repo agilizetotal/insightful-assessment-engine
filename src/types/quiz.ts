@@ -10,7 +10,7 @@ export interface Option {
 export interface Condition {
   questionId: string;
   operator: 'equals' | 'not-equals' | 'greater-than' | 'less-than' | 'contains';
-  value: string | number;
+  value: string;  // Changed from string | number to string to match Supabase schema
   logicalOperator?: 'AND' | 'OR';
 }
 

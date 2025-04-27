@@ -1,338 +1,199 @@
-
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "lucide-react";
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { AreaChart } from '@/components/AreaChart';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, ArrowRight, Edit, Trash } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
-} from "@/components/ui/dialog";
-import { useNavigate } from 'react-router-dom';
 import { translations } from '@/locales/pt-BR';
 
-type Quiz = {
+interface Response {
   id: string;
-  title: string;
-  created_at: string;
-  updated_at: string;
-  response_count: number;
-};
-
-type Response = {
-  id: string;
-  quiz_title: string;
-  created_at: string;
+  quizTitle: string;
+  date: string;
   profile: string;
-  user_data: {
-    name: string;
-    email: string;
-    phone?: string;
-  }
-};
+  name: string;
+  email: string;
+  phone: string;
+}
 
 const AdminDashboard = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [responses, setResponses] = useState<Response[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [quizToDelete, setQuizToDelete] = useState<string | null>(null);
-  const [statsData, setStatsData] = useState({
-    quizCount: 0,
-    responseCount: 0,
-    completionRate: 0
-  });
+  const [loadingResponses, setLoadingResponses] = useState(true);
+  const { user } = useAuth();
+  const [analyticsData, setAnalyticsData] = useState<{ date: string; responses: number; }[]>([]);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(true);
 
   useEffect(() => {
     if (user) {
-      loadDashboardData();
+      loadResponses();
+      loadAnalytics();
     }
   }, [user]);
 
-  const loadDashboardData = async () => {
+  const loadResponses = async () => {
+    setLoadingResponses(true);
     try {
-      setLoading(true);
-      
-      // Fetch user's quizzes
-      const { data: quizzesData, error: quizError } = await supabase
-        .from('quizzes')
-        .select('id, title, created_at, updated_at')
-        .eq('user_id', user?.id)
-        .order('updated_at', { ascending: false });
-      
-      if (quizError) throw quizError;
-      
-      // Count responses for each quiz
-      const quizzesWithCounts = await Promise.all(quizzesData.map(async (quiz) => {
-        const { count, error: countError } = await supabase
-          .from('quiz_responses')
-          .select('*', { count: 'exact', head: true })
-          .eq('quiz_id', quiz.id);
-          
-        return {
-          ...quiz,
-          response_count: count || 0
-        };
-      }));
-      
-      setQuizzes(quizzesWithCounts);
-      
-      // Fetch recent responses
-      const { data: responsesData, error: responsesError } = await supabase
+      // Fetch recent responses with quiz titles
+      const { data: responseData, error } = await supabase
         .from('quiz_responses')
         .select(`
-          id,
-          created_at: completed_at,
-          profile,
-          user_data,
-          quizzes(title)
-        `)
-        .eq('quizzes.user_id', user?.id)
+        id, 
+        quiz_id,
+        score,
+        profile,
+        completed_at,
+        user_data,
+        quizzes:quiz_id (title)
+      `)
+        .eq('user_id', user.id)
         .order('completed_at', { ascending: false })
-        .limit(10);
-      
-      if (responsesError) throw responsesError;
-      
-      const formattedResponses = responsesData.map(response => ({
-        id: response.id,
-        quiz_title: response.quizzes?.title || 'Quiz Desconhecido',
-        created_at: response.created_at,
-        profile: response.profile,
-        user_data: response.user_data || { name: 'Anônimo', email: 'N/A' }
-      }));
-      
-      setResponses(formattedResponses);
-      
-      // Calculate stats
-      const totalQuizzes = quizzesWithCounts.length;
-      const totalResponses = quizzesWithCounts.reduce((sum, quiz) => sum + quiz.response_count, 0);
-      const avgCompletionRate = totalQuizzes > 0 ? (totalResponses / totalQuizzes) : 0;
-      
-      setStatsData({
-        quizCount: totalQuizzes,
-        responseCount: totalResponses,
-        completionRate: avgCompletionRate
-      });
-    } catch (error) {
-      console.error('Erro ao carregar dados do dashboard:', error);
-      toast.error('Erro ao carregar dados. Tente novamente mais tarde.');
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const handleDeleteQuiz = async (quizId: string) => {
-    try {
-      // Delete the quiz
-      const { error } = await supabase
-        .from('quizzes')
-        .delete()
-        .eq('id', quizId);
-      
-      if (error) throw error;
-      
-      // Update the local state
-      setQuizzes(quizzes.filter(quiz => quiz.id !== quizId));
-      setQuizToDelete(null);
-      
-      toast.success(translations.quiz.deleteSuccess);
-    } catch (error) {
-      console.error('Erro ao excluir quiz:', error);
-      toast.error(translations.quiz.deleteError);
-    }
-  };
+        .limit(5);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4">{translations.common.loading}</p>
-        </div>
-      </div>
-    );
+    if (error) {
+      console.error("Error loading responses:", error);
+      toast.error("Erro ao carregar respostas");
+      setResponses([]);
+      return;
+    }
+
+    // Safely map the data with type checking
+    const formattedResponses = responseData.map(item => {
+      // Safe way to handle potentially missing data
+      return {
+        id: item?.id || '',
+        quizTitle: item?.quizzes?.title || 'Quiz desconhecido',
+        date: item?.completed_at ? new Date(item.completed_at).toLocaleDateString() : '-',
+        profile: item?.profile || 'Perfil desconhecido',
+        // Safely access potentially missing user_data
+        name: item?.user_data?.name || 'Usuário anônimo',
+        email: item?.user_data?.email || '-',
+        phone: item?.user_data?.phone || '-',
+      };
+    });
+
+    setResponses(formattedResponses);
+  } catch (err) {
+    console.error("Error in loadResponses:", err);
+    toast.error("Erro ao processar respostas");
+    setResponses([]);
+  } finally {
+    setLoadingResponses(false);
   }
+};
+
+  const loadAnalytics = async () => {
+    setLoadingAnalytics(true);
+    try {
+      // Fetch quiz responses grouped by date
+      const { data, error } = await supabase
+        .from('quiz_responses')
+        .select('completed_at')
+        .eq('user_id', user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Process the data to count responses per day
+      const dailyCounts = data.reduce((acc, item) => {
+        const date = format(new Date(item.completed_at), 'yyyy-MM-dd');
+        acc[date] = (acc[date] || 0) + 1;
+        return acc;
+      }, {});
+
+      // Convert the processed data into the format required by AreaChart
+      const analyticsData = Object.entries(dailyCounts).map(([date, responses]) => ({
+        date,
+        responses: responses as number,
+      }));
+
+      setAnalyticsData(analyticsData);
+    } catch (error) {
+      console.error("Erro ao carregar dados de análise:", error);
+      toast.error("Erro ao carregar dados de análise");
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
 
   return (
     <div className="container mx-auto p-4 pt-16">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">{translations.dashboard.title}</h1>
-        <Button asChild>
-          <Link to="/admin/create-new">
-            <Plus className="h-4 w-4 mr-2" />
-            {translations.dashboard.createNewQuiz}
-          </Link>
-        </Button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">{translations.dashboard.stats.quizzes}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{statsData.quizCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">{translations.dashboard.stats.responses}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{statsData.responseCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">{translations.dashboard.stats.completionRate}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{statsData.completionRate.toFixed(1)}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quizzes List */}
-      <Card className="mb-6">
+      <Card className="mb-8">
         <CardHeader>
-          <CardTitle>{translations.dashboard.recentQuizzes}</CardTitle>
-          <CardDescription>{translations.quiz.title}</CardDescription>
+          <CardTitle>{translations.dashboard.welcomeBack}, {user?.email}</CardTitle>
         </CardHeader>
         <CardContent>
-          {quizzes.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{translations.quiz.title}</TableHead>
-                  <TableHead className="hidden md:table-cell">{translations.common.create}</TableHead>
-                  <TableHead className="hidden md:table-cell">{translations.common.update}</TableHead>
-                  <TableHead>{translations.dashboard.recentResponses}</TableHead>
-                  <TableHead className="text-right">{translations.common.edit}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {quizzes.map((quiz) => (
-                  <TableRow key={quiz.id}>
-                    <TableCell className="font-medium">{quiz.title}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {new Date(quiz.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {new Date(quiz.updated_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>{quiz.response_count}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end space-x-1">
-                        <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/edit/${quiz.id}`)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        
-                        <Dialog open={quizToDelete === quiz.id} onOpenChange={() => setQuizToDelete(null)}>
-                          <DialogTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-red-500 hover:text-red-700"
-                              onClick={() => setQuizToDelete(quiz.id)}
-                            >
-                              <Trash className="h-4 w-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>{translations.quiz.deleteConfirm}</DialogTitle>
-                              <DialogDescription>
-                                Esta ação não pode ser desfeita. Isto excluirá permanentemente o questionário "{quiz.title}" e todos os seus dados.
-                              </DialogDescription>
-                            </DialogHeader>
-                            <DialogFooter>
-                              <Button variant="outline" onClick={() => setQuizToDelete(null)}>
-                                {translations.common.cancel}
-                              </Button>
-                              <Button variant="destructive" onClick={() => handleDeleteQuiz(quiz.id)}>
-                                {translations.common.delete}
-                              </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center py-6">
-              <p className="text-gray-500 mb-4">Você ainda não criou nenhum questionário</p>
-              <Button asChild>
-                <Link to="/admin/create-new">
-                  <Plus className="h-4 w-4 mr-2" />
-                  {translations.dashboard.createNewQuiz}
-                </Link>
-              </Button>
-            </div>
-          )}
+          <p>
+            {translations.dashboard.createNewQuiz}{' '}
+            <Link to="/admin/create-new" className="text-blue-500 hover:underline">
+              {translations.common.edit}
+            </Link>
+          </p>
         </CardContent>
       </Card>
 
-      {/* Recent Responses */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{translations.dashboard.recentResponses}</CardTitle>
-          <CardDescription>Respostas mais recentes dos seus questionários</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {responses.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead className="hidden md:table-cell">Questionário</TableHead>
-                  <TableHead className="hidden md:table-cell">Data</TableHead>
-                  <TableHead>Perfil</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {responses.map((response) => (
-                  <TableRow key={response.id}>
-                    <TableCell className="font-medium">{response.user_data.name}</TableCell>
-                    <TableCell>{response.user_data.email}</TableCell>
-                    <TableCell className="hidden md:table-cell">{response.quiz_title}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {new Date(response.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>{response.profile}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center py-6">
-              <p className="text-gray-500">Sem respostas ainda</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>{translations.dashboard.recentResponses}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingResponses ? (
+              <p>{translations.common.loading}...</p>
+            ) : responses.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead>
+                    <tr>
+                      <th className="text-left">{translations.quiz.title}</th>
+                      <th className="text-left">Data</th>
+                      <th className="text-left">Perfil</th>
+                      <th className="text-left">Nome</th>
+                      <th className="text-left">Email</th>
+                      <th className="text-left">Telefone</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {responses.map((response) => (
+                      <tr key={response.id}>
+                        <td>{response.quizTitle}</td>
+                        <td>{response.date}</td>
+                        <td>{response.profile}</td>
+                        <td>{response.name}</td>
+                        <td>{response.email}</td>
+                        <td>{response.phone}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p>Nenhuma resposta recente encontrada.</p>
+            )}
+            <Button asChild variant="link" className="mt-4">
+              <Link to="/admin">{translations.dashboard.seeAll}</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{translations.dashboard.stats.title}</CardTitle>
+            <CardContent>
+              {loadingAnalytics ? (
+                <p>{translations.common.loading}...</p>
+              ) : (
+                <AreaChart data={analyticsData} />
+              )}
+            </CardContent>
+          </CardHeader>
+        </Card>
+      </div>
     </div>
   );
 };
