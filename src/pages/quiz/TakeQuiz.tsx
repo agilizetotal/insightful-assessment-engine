@@ -187,7 +187,7 @@ const TakeQuiz = () => {
       
       if (index === 0) return conditionResult;
       
-      const logicalOperator = conditions[index].logical_operator || defaultLogicalOperator;
+      const logicalOperator = condition.logical_operator || defaultLogicalOperator;
       
       if (logicalOperator === "AND") {
         return result && conditionResult;

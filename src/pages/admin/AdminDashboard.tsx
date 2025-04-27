@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,8 +76,17 @@ const AdminDashboard = () => {
         return;
       }
 
+      if (!responseData) {
+        setResponses([]);
+        return;
+      }
+
+      // Type check and handle the response data properly
+      // Cast responseData to unknown first, then to DatabaseResponse[] to avoid TypeScript error
+      const typedResponseData = responseData as unknown as DatabaseResponse[];
+
       // Safely map the data with type checking
-      const formattedResponses = (responseData as DatabaseResponse[] || []).map((item: DatabaseResponse) => {
+      const formattedResponses = typedResponseData.map((item: DatabaseResponse) => {
         // Safe way to handle potentially missing data
         return {
           id: item?.id || '',
