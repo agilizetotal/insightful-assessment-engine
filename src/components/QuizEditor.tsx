@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -42,6 +41,9 @@ import {
   Play
 } from "lucide-react";
 import { Quiz, Question, Option, ProfileRange, QuestionType } from "@/types/quiz";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface QuizEditorProps {
   initialQuiz?: Quiz;
@@ -81,6 +83,8 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   });
+  const [isSaving, setIsSaving] = useState(false);
+  const { user } = useAuth();
   
   const addQuestion = () => {
     const newQuestion = {
@@ -225,13 +229,127 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
       profileRanges: updatedRanges
     });
   };
+
+  const saveToSupabase = async (quizData: Quiz) => {
+    if (!user) {
+      toast.error("Você precisa estar logado para salvar um quiz");
+      return null;
+    }
+
+    setIsSaving(true);
+    try {
+      const updatedQuizData = {
+        ...quizData,
+        updatedAt: new Date().toISOString(),
+      };
+
+      const { data: quizData, error: quizError } = await supabase
+        .from('quizzes')
+        .upsert({
+          id: updatedQuizData.id,
+          title: updatedQuizData.title,
+          description: updatedQuizData.description,
+          user_id: user.id,
+          updated_at: new Date().toISOString(),
+          created_at: updatedQuizData.createdAt
+        })
+        .select('id')
+        .single();
+
+      if (quizError) {
+        throw quizError;
+      }
+
+      const questionsToInsert = updatedQuizData.questions.map((question, index) => ({
+        id: question.id,
+        quiz_id: quizData.id,
+        text: question.text,
+        type: question.type,
+        required: question.required,
+        order_index: index,
+        updated_at: new Date().toISOString()
+      }));
+
+      if (questionsToInsert.length > 0) {
+        await supabase
+          .from('questions')
+          .delete()
+          .eq('quiz_id', quizData.id);
+
+        const { error: questionsError } = await supabase
+          .from('questions')
+          .insert(questionsToInsert);
+
+        if (questionsError) {
+          throw questionsError;
+        }
+
+        for (const question of updatedQuizData.questions) {
+          if (question.options && question.options.length > 0) {
+            await supabase
+              .from('question_options')
+              .delete()
+              .eq('question_id', question.id);
+
+            const optionsToInsert = question.options.map((option, index) => ({
+              id: option.id,
+              question_id: question.id,
+              text: option.text,
+              weight: option.weight,
+              order_index: index
+            }));
+
+            const { error: optionsError } = await supabase
+              .from('question_options')
+              .insert(optionsToInsert);
+
+            if (optionsError) {
+              throw optionsError;
+            }
+          }
+        }
+      }
+
+      if (updatedQuizData.profileRanges.length > 0) {
+        await supabase
+          .from('profile_ranges')
+          .delete()
+          .eq('quiz_id', quizData.id);
+
+        const rangesToInsert = updatedQuizData.profileRanges.map(range => ({
+          id: crypto.randomUUID(),
+          quiz_id: quizData.id,
+          min_score: range.min,
+          max_score: range.max,
+          profile: range.profile,
+          description: range.description
+        }));
+
+        const { error: rangesError } = await supabase
+          .from('profile_ranges')
+          .insert(rangesToInsert);
+
+        if (rangesError) {
+          throw rangesError;
+        }
+      }
+
+      toast.success("Quiz salvo com sucesso!");
+      return updatedQuizData;
+    } catch (error) {
+      console.error("Erro ao salvar quiz:", error);
+      toast.error("Erro ao salvar quiz. Tente novamente.");
+      return null;
+    } finally {
+      setIsSaving(false);
+    }
+  };
   
-  const handleSave = () => {
-    const updatedQuiz = {
-      ...quiz,
-      updatedAt: new Date().toISOString()
-    };
-    onSave(updatedQuiz);
+  const handleSave = async () => {
+    const updatedQuiz = await saveToSupabase(quiz);
+    if (updatedQuiz) {
+      onSave(updatedQuiz);
+    }
   };
   
   const handlePreview = () => {
@@ -241,50 +359,50 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Quiz Editor</h1>
+        <h1 className="text-2xl font-bold">Editor de Quiz</h1>
         <div className="space-x-2">
-          <Button onClick={handlePreview} variant="outline">
+          <Button onClick={handlePreview} variant="outline" disabled={isSaving}>
             <Play className="h-4 w-4 mr-2" />
-            Preview
+            Visualizar
           </Button>
-          <Button onClick={handleSave}>
+          <Button onClick={handleSave} disabled={isSaving}>
             <Save className="h-4 w-4 mr-2" />
-            Save Quiz
+            {isSaving ? "Salvando..." : "Salvar Quiz"}
           </Button>
         </div>
       </div>
       
       <Tabs defaultValue="general">
         <TabsList className="mb-4">
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="questions">Questions</TabsTrigger>
-          <TabsTrigger value="profiles">Profile Definitions</TabsTrigger>
+          <TabsTrigger value="general">Geral</TabsTrigger>
+          <TabsTrigger value="questions">Perguntas</TabsTrigger>
+          <TabsTrigger value="profiles">Definições de Perfil</TabsTrigger>
         </TabsList>
         
         <TabsContent value="general">
           <Card>
             <CardHeader>
-              <CardTitle>Quiz Settings</CardTitle>
-              <CardDescription>Configure the basic settings for your quiz</CardDescription>
+              <CardTitle>Configurações do Quiz</CardTitle>
+              <CardDescription>Configure as configurações básicas para o seu quiz</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="title">Quiz Title</Label>
+                <Label htmlFor="title">Título do Quiz</Label>
                 <Input 
                   id="title" 
                   value={quiz.title} 
                   onChange={(e) => setQuiz({...quiz, title: e.target.value})}
-                  placeholder="Enter a descriptive title for your quiz"
+                  placeholder="Digite um título descritivo para o seu quiz"
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">Descrição</Label>
                 <Textarea 
                   id="description" 
                   value={quiz.description} 
                   onChange={(e) => setQuiz({...quiz, description: e.target.value})}
-                  placeholder="Provide instructions or context for quiz takers"
+                  placeholder="Forneça instruções ou contexto para os participantes do quiz"
                   rows={4}
                 />
               </div>
@@ -298,7 +416,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
               <Card key={question.id}>
                 <CardHeader className="pb-2">
                   <div className="flex justify-between">
-                    <CardTitle className="text-lg">Question {questionIndex + 1}</CardTitle>
+                    <CardTitle className="text-lg">Pergunta {questionIndex + 1}</CardTitle>
                     <div className="flex space-x-1">
                       <Button 
                         size="sm" 
@@ -336,7 +454,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                 </CardHeader>
                 <CardContent className="space-y-4 pt-0">
                   <div className="space-y-2">
-                    <Label htmlFor={`question-${questionIndex}`}>Question Text</Label>
+                    <Label htmlFor={`question-${questionIndex}`}>Texto da pergunta</Label>
                     <Textarea 
                       id={`question-${questionIndex}`} 
                       value={question.text} 
@@ -344,13 +462,13 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                         ...question, 
                         text: e.target.value
                       })}
-                      placeholder="Enter your question here"
+                      placeholder="Digite sua pergunta aqui"
                     />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor={`question-type-${questionIndex}`}>Question Type</Label>
+                      <Label htmlFor={`question-type-${questionIndex}`}>Tipo de Pergunta</Label>
                       <Select 
                         value={question.type} 
                         onValueChange={(value: QuestionType) => updateQuestion(questionIndex, {
@@ -359,12 +477,12 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                         })}
                       >
                         <SelectTrigger id={`question-type-${questionIndex}`}>
-                          <SelectValue placeholder="Select question type" />
+                          <SelectValue placeholder="Selecione o tipo de pergunta" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
-                          <SelectItem value="checkbox">Checkbox</SelectItem>
-                          <SelectItem value="open-ended">Open-Ended</SelectItem>
+                          <SelectItem value="multiple-choice">Múltipla Escolha</SelectItem>
+                          <SelectItem value="checkbox">Caixas de Seleção</SelectItem>
+                          <SelectItem value="open-ended">Resposta Aberta</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -378,21 +496,21 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                           required: checked
                         })}
                       />
-                      <Label htmlFor={`required-${questionIndex}`}>Required Question</Label>
+                      <Label htmlFor={`required-${questionIndex}`}>Pergunta Obrigatória</Label>
                     </div>
                   </div>
                   
                   {question.type !== 'open-ended' && (
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
-                        <Label>Options</Label>
+                        <Label>Opções</Label>
                         <Button 
                           size="sm" 
                           variant="outline" 
                           onClick={() => addOption(questionIndex)}
                         >
                           <Plus className="h-4 w-4 mr-1" />
-                          Add Option
+                          Adicionar Opção
                         </Button>
                       </div>
                       
@@ -405,7 +523,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                                 ...option, 
                                 text: e.target.value
                               })}
-                              placeholder={`Option ${optionIndex + 1}`}
+                              placeholder={`Opção ${optionIndex + 1}`}
                             />
                           </div>
                           <div className="w-24">
@@ -416,7 +534,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                                 ...option, 
                                 weight: parseInt(e.target.value) || 0
                               })}
-                              placeholder="Weight"
+                              placeholder="Peso"
                             />
                           </div>
                           <Button 
@@ -435,18 +553,17 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                   
                   <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="conditions">
-                      <AccordionTrigger>Conditional Logic</AccordionTrigger>
+                      <AccordionTrigger>Lógica Condicional</AccordionTrigger>
                       <AccordionContent>
                         <div className="space-y-4 pt-2">
                           <div className="text-sm text-gray-500">
-                            Define when this question should appear based on previous answers.
-                            If no conditions are set, the question will always appear.
+                            Defina quando esta pergunta deve aparecer com base nas respostas anteriores.
+                            Se nenhuma condição for definida, a pergunta sempre aparecerá.
                           </div>
                           
-                          {/* Simplified conditions UI for now - can be expanded later */}
                           <div className="bg-gray-50 p-3 rounded-md">
                             <div className="text-center text-sm text-gray-500">
-                              Advanced conditions editing will be available in a future update.
+                              A edição avançada de condições estará disponível em uma atualização futura.
                             </div>
                           </div>
                         </div>
@@ -459,7 +576,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
             
             <Button onClick={addQuestion} className="w-full">
               <Plus className="h-4 w-4 mr-2" />
-              Add Question
+              Adicionar Pergunta
             </Button>
           </div>
         </TabsContent>
@@ -467,16 +584,16 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
         <TabsContent value="profiles">
           <Card>
             <CardHeader>
-              <CardTitle>Profile Definitions</CardTitle>
+              <CardTitle>Definições de Perfil</CardTitle>
               <CardDescription>
-                Define score ranges and corresponding profiles for quiz results
+                Defina faixas de pontuação e perfis correspondentes para os resultados do quiz
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {quiz.profileRanges.map((range, index) => (
                 <div key={index} className="p-4 border rounded-md space-y-3">
                   <div className="flex justify-between items-center">
-                    <h3 className="font-medium">Profile {index + 1}</h3>
+                    <h3 className="font-medium">Perfil {index + 1}</h3>
                     <Button 
                       size="sm" 
                       variant="ghost" 
@@ -489,7 +606,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor={`min-${index}`}>Minimum Score</Label>
+                      <Label htmlFor={`min-${index}`}>Pontuação Mínima</Label>
                       <Input 
                         id={`min-${index}`} 
                         type="number" 
@@ -502,7 +619,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor={`max-${index}`}>Maximum Score</Label>
+                      <Label htmlFor={`max-${index}`}>Pontuação Máxima</Label>
                       <Input 
                         id={`max-${index}`} 
                         type="number" 
@@ -516,7 +633,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor={`profile-${index}`}>Profile Name</Label>
+                    <Label htmlFor={`profile-${index}`}>Nome do Perfil</Label>
                     <Input 
                       id={`profile-${index}`} 
                       value={range.profile} 
@@ -524,12 +641,12 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                         ...range, 
                         profile: e.target.value
                       })}
-                      placeholder="e.g., Leadership Type A"
+                      placeholder="ex., Tipo de Liderança A"
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor={`description-${index}`}>Profile Description</Label>
+                    <Label htmlFor={`description-${index}`}>Descrição do Perfil</Label>
                     <Textarea 
                       id={`description-${index}`} 
                       value={range.description} 
@@ -537,7 +654,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                         ...range, 
                         description: e.target.value
                       })}
-                      placeholder="Describe the characteristics of this profile"
+                      placeholder="Descreva as características deste perfil"
                       rows={3}
                     />
                   </div>
@@ -546,13 +663,13 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
               
               <Button onClick={addProfileRange} variant="outline" className="w-full">
                 <Plus className="h-4 w-4 mr-2" />
-                Add Profile Range
+                Adicionar Faixa de Perfil
               </Button>
             </CardContent>
             <CardFooter className="bg-gray-50 text-sm text-gray-500">
               <p>
-                The system will calculate a total score based on the weights assigned to each selected option.
-                Then it will match the score to the appropriate profile range defined here.
+                O sistema calculará uma pontuação total com base nos pesos atribuídos a cada opção selecionada.
+                Em seguida, ele fará a correspondência da pontuação com a faixa de perfil apropriada definida aqui.
               </p>
             </CardFooter>
           </Card>

@@ -23,12 +23,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   // Função para fazer logout
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
-      toast("Logout realizado com sucesso");
+      navigate('/auth', { replace: true });
+      toast.success("Logout realizado com sucesso");
     } catch (error) {
       console.error("Erro ao fazer logout:", error);
       toast.error("Erro ao fazer logout");
@@ -39,9 +41,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Configurar o listener de alteração de estado de autenticação PRIMEIRO
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("Evento de autenticação:", event);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Redirecionar com base no evento de autenticação
+        if (event === 'SIGNED_IN') {
+          // Usar setTimeout para evitar possíveis problemas de recursão
+          setTimeout(() => {
+            const currentPath = window.location.pathname;
+            if (currentPath === '/auth') {
+              navigate('/admin', { replace: true });
+            }
+          }, 0);
+        } else if (event === 'SIGNED_OUT') {
+          // Redirecionar para login quando desconectado
+          setTimeout(() => {
+            navigate('/auth', { replace: true });
+          }, 0);
+        }
       }
     );
 
@@ -53,7 +72,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   return (
     <AuthContext.Provider value={{ session, user, loading, signOut }}>
