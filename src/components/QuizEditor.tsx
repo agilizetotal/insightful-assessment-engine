@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Save, Play } from "lucide-react";
-import { Quiz, Question, Option, Condition } from "@/types/quiz";
+import { Quiz } from "@/types/quiz";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -10,7 +10,7 @@ import { translations } from "@/locales/pt-BR";
 import { GeneralSettings } from "./quiz-editor/GeneralSettings";
 import { ProfileRanges } from "./quiz-editor/ProfileRanges";
 import { QuestionsList } from "./quiz-editor/QuestionsList";
-import { defaultQuestion, defaultOption } from "./quiz-editor/defaults";
+import { useQuestions } from "@/hooks/useQuestions";
 
 interface QuizEditorProps {
   initialQuiz?: Quiz;
@@ -31,115 +31,18 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview,
   });
   const [isSaving, setIsSaving] = useState(false);
   const { user } = useAuth();
-
-  const addQuestion = () => {
-    const newQuestion = {
-      ...defaultQuestion,
-      id: crypto.randomUUID(),
-      options: [
-        { ...defaultOption, id: crypto.randomUUID(), text: 'Option 1' },
-        { ...defaultOption, id: crypto.randomUUID(), text: 'Option 2' }
-      ]
-    };
-    
-    setQuiz({
-      ...quiz,
-      questions: [...quiz.questions, newQuestion]
-    });
-  };
   
-  const updateQuestion = (index: number, updatedQuestion: Question) => {
-    const updatedQuestions = [...quiz.questions];
-    updatedQuestions[index] = updatedQuestion;
-    
-    setQuiz({
-      ...quiz,
-      questions: updatedQuestions
-    });
-  };
-  
-  const removeQuestion = (index: number) => {
-    const updatedQuestions = quiz.questions.filter((_, i) => i !== index);
-    
-    setQuiz({
-      ...quiz,
-      questions: updatedQuestions
-    });
-  };
-  
-  const moveQuestion = (index: number, direction: 'up' | 'down') => {
-    if (
-      (direction === 'up' && index === 0) ||
-      (direction === 'down' && index === quiz.questions.length - 1)
-    ) {
-      return;
-    }
-    
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    const updatedQuestions = [...quiz.questions];
-    [updatedQuestions[index], updatedQuestions[newIndex]] = 
-      [updatedQuestions[newIndex], updatedQuestions[index]];
-    
-    setQuiz({
-      ...quiz,
-      questions: updatedQuestions
-    });
-  };
-  
-  const duplicateQuestion = (index: number) => {
-    const questionToDuplicate = quiz.questions[index];
-    const duplicatedQuestion = {
-      ...questionToDuplicate,
-      id: crypto.randomUUID(),
-      options: questionToDuplicate.options?.map(option => ({
-        ...option,
-        id: crypto.randomUUID()
-      }))
-    };
-    
-    const updatedQuestions = [...quiz.questions];
-    updatedQuestions.splice(index + 1, 0, duplicatedQuestion);
-    
-    setQuiz({
-      ...quiz,
-      questions: updatedQuestions
-    });
-  };
-  
-  const addOption = (questionIndex: number) => {
-    const question = quiz.questions[questionIndex];
-    const updatedOptions = [...(question.options || []), {
-      ...defaultOption,
-      id: crypto.randomUUID(),
-      text: `Option ${(question.options?.length || 0) + 1}`
-    }];
-    
-    updateQuestion(questionIndex, {
-      ...question,
-      options: updatedOptions
-    });
-  };
-  
-  const updateOption = (questionIndex: number, optionIndex: number, updatedOption: Option) => {
-    const question = quiz.questions[questionIndex];
-    const updatedOptions = [...(question.options || [])];
-    updatedOptions[optionIndex] = updatedOption;
-    
-    updateQuestion(questionIndex, {
-      ...question,
-      options: updatedOptions
-    });
-  };
-  
-  const removeOption = (questionIndex: number, optionIndex: number) => {
-    const question = quiz.questions[questionIndex];
-    const updatedOptions = (question.options || []).filter((_, i) => i !== optionIndex);
-    
-    updateQuestion(questionIndex, {
-      ...question,
-      options: updatedOptions
-    });
-  };
+  const {
+    questions,
+    addQuestion,
+    updateQuestion,
+    removeQuestion,
+    moveQuestion,
+    duplicateQuestion,
+    addOption,
+    updateOption,
+    removeOption
+  } = useQuestions(quiz, setQuiz);
   
   const saveToSupabase = async (quizData: Quiz) => {
     if (!user) {
@@ -316,7 +219,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview,
         
         <TabsContent value="questions">
           <QuestionsList
-            questions={quiz.questions}
+            questions={questions}
             onUpdateQuestion={updateQuestion}
             onRemoveQuestion={removeQuestion}
             onMoveQuestion={moveQuestion}

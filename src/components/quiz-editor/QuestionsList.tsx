@@ -1,4 +1,3 @@
-
 import { Question, Option, QuestionType } from '@/types/quiz';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -36,6 +35,17 @@ export const QuestionsList = ({
   onUpdateOption,
   onRemoveOption
 }: QuestionsListProps) => {
+  const handleUpdateCondition = (questionIndex: number, conditionIndex: number, condition: Condition) => {
+    const question = questions[questionIndex];
+    const updatedConditions = [...(question.conditions || [])];
+    updatedConditions[conditionIndex] = condition;
+    
+    onUpdateQuestion(questionIndex, {
+      ...question,
+      conditions: updatedConditions
+    });
+  };
+
   return (
     <div className="space-y-4">
       {questions.map((question, questionIndex) => (
@@ -185,7 +195,7 @@ export const QuestionsList = ({
                     question={question}
                     questionIndex={questionIndex}
                     previousQuestions={questions.slice(0, questionIndex)}
-                    onUpdateCondition={onUpdateQuestion}
+                    onUpdateCondition={handleUpdateCondition}
                     onAddCondition={() => {}}
                     onRemoveCondition={() => {}}
                   />
