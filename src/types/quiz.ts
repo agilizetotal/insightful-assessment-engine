@@ -10,7 +10,11 @@ export interface Condition {
   questionId: string;
   operator: 'equals' | 'not-equals' | 'greater-than' | 'less-than' | 'contains';
   value: string;
-  logicalOperator?: 'AND' | 'OR';
+  created_at?: string;
+  dependent_question_id?: string;
+  id?: string;
+  question_id?: string;
+  logical_operator?: 'AND' | 'OR';
 }
 
 export interface Question {
