@@ -1,5 +1,5 @@
 
-import { Home } from "lucide-react";
+import { Home, Plus } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "./button";
 import { translations } from "@/locales/pt-BR";
@@ -29,9 +29,10 @@ export function Navigation() {
             </Link>
           </Button>
         )}
-        {location.pathname !== "/admin/create" && (
+        {location.pathname !== "/admin/create-new" && (
           <Button asChild variant="outline" size="sm">
-            <Link to="/admin/create">
+            <Link to="/admin/create-new">
+              <Plus className="h-4 w-4 mr-2" />
               {translations.quiz.createNew}
             </Link>
           </Button>

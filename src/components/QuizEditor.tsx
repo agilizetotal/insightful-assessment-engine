@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -40,15 +41,17 @@ import {
   Save, 
   Play
 } from "lucide-react";
-import { Quiz, Question, Option, ProfileRange, QuestionType } from "@/types/quiz";
+import { Quiz, Question, Option, ProfileRange, QuestionType, Condition } from "@/types/quiz";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { translations } from "@/locales/pt-BR";
 
 interface QuizEditorProps {
   initialQuiz?: Quiz;
   onSave: (quiz: Quiz) => void;
   onPreview: (quiz: Quiz) => void;
+  isNewQuiz?: boolean;
 }
 
 const defaultQuestion: Question = {
@@ -66,6 +69,13 @@ const defaultOption: Option = {
   weight: 0
 };
 
+const defaultCondition: Condition = {
+  questionId: '',
+  operator: 'equals',
+  value: '',
+  logicalOperator: 'AND'
+};
+
 const defaultProfileRange: ProfileRange = {
   min: 0,
   max: 0,
@@ -73,7 +83,7 @@ const defaultProfileRange: ProfileRange = {
   description: ''
 };
 
-const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview }) => {
+const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview, isNewQuiz = false }) => {
   const [quiz, setQuiz] = useState<Quiz>(initialQuiz || {
     id: crypto.randomUUID(),
     title: '',
@@ -195,6 +205,52 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
     });
   };
   
+  const addCondition = (questionIndex: number) => {
+    const question = quiz.questions[questionIndex];
+    const previousQuestions = quiz.questions.slice(0, questionIndex);
+    
+    if (previousQuestions.length === 0) {
+      toast.error(translations.quiz.noConditionsAvailable);
+      return;
+    }
+    
+    const newCondition: Condition = {
+      ...defaultCondition,
+      questionId: previousQuestions[0].id,
+      value: previousQuestions[0].type === 'multiple-choice' && previousQuestions[0].options 
+        ? previousQuestions[0].options[0].id 
+        : ''
+    };
+    
+    const updatedConditions = [...(question.conditions || []), newCondition];
+    
+    updateQuestion(questionIndex, {
+      ...question,
+      conditions: updatedConditions
+    });
+  };
+  
+  const updateCondition = (questionIndex: number, conditionIndex: number, updatedCondition: Condition) => {
+    const question = quiz.questions[questionIndex];
+    const updatedConditions = [...(question.conditions || [])];
+    updatedConditions[conditionIndex] = updatedCondition;
+    
+    updateQuestion(questionIndex, {
+      ...question,
+      conditions: updatedConditions
+    });
+  };
+  
+  const removeCondition = (questionIndex: number, conditionIndex: number) => {
+    const question = quiz.questions[questionIndex];
+    const updatedConditions = (question.conditions || []).filter((_, i) => i !== conditionIndex);
+    
+    updateQuestion(questionIndex, {
+      ...question,
+      conditions: updatedConditions
+    });
+  };
+  
   const addProfileRange = () => {
     setQuiz({
       ...quiz,
@@ -232,7 +288,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
 
   const saveToSupabase = async (quizData: Quiz) => {
     if (!user) {
-      toast.error("Você precisa estar logado para salvar um quiz");
+      toast.error(translations.auth.loginRequired);
       return null;
     }
 
@@ -307,6 +363,31 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
               throw optionsError;
             }
           }
+          
+          // Save conditions for questions
+          if (question.conditions && question.conditions.length > 0) {
+            await supabase
+              .from('question_conditions')
+              .delete()
+              .eq('dependent_question_id', question.id);
+              
+            const conditionsToInsert = question.conditions.map((condition, index) => ({
+              id: crypto.randomUUID(),
+              question_id: condition.questionId,
+              dependent_question_id: question.id,
+              operator: condition.operator,
+              value: condition.value,
+              logical_operator: condition.logicalOperator || 'AND'
+            }));
+            
+            const { error: conditionsError } = await supabase
+              .from('question_conditions')
+              .insert(conditionsToInsert);
+              
+            if (conditionsError) {
+              throw conditionsError;
+            }
+          }
         }
       }
 
@@ -334,11 +415,11 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
         }
       }
 
-      toast.success("Quiz salvo com sucesso!");
+      toast.success(translations.quiz.saveSuccess);
       return updatedQuizData;
     } catch (error) {
       console.error("Erro ao salvar quiz:", error);
-      toast.error("Erro ao salvar quiz. Tente novamente.");
+      toast.error(translations.quiz.saveError);
       return null;
     } finally {
       setIsSaving(false);
@@ -359,50 +440,50 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Editor de Quiz</h1>
+        <h1 className="text-2xl font-bold">{translations.quiz.editor}</h1>
         <div className="space-x-2">
           <Button onClick={handlePreview} variant="outline" disabled={isSaving}>
             <Play className="h-4 w-4 mr-2" />
-            Visualizar
+            {translations.common.preview}
           </Button>
           <Button onClick={handleSave} disabled={isSaving}>
             <Save className="h-4 w-4 mr-2" />
-            {isSaving ? "Salvando..." : "Salvar Quiz"}
+            {isSaving ? translations.common.saving : translations.common.saveQuiz}
           </Button>
         </div>
       </div>
       
       <Tabs defaultValue="general">
         <TabsList className="mb-4">
-          <TabsTrigger value="general">Geral</TabsTrigger>
-          <TabsTrigger value="questions">Perguntas</TabsTrigger>
-          <TabsTrigger value="profiles">Definições de Perfil</TabsTrigger>
+          <TabsTrigger value="general">{translations.quiz.general}</TabsTrigger>
+          <TabsTrigger value="questions">{translations.quiz.questions}</TabsTrigger>
+          <TabsTrigger value="profiles">{translations.quiz.profiles}</TabsTrigger>
         </TabsList>
         
         <TabsContent value="general">
           <Card>
             <CardHeader>
-              <CardTitle>Configurações do Quiz</CardTitle>
-              <CardDescription>Configure as configurações básicas para o seu quiz</CardDescription>
+              <CardTitle>{translations.quiz.settings}</CardTitle>
+              <CardDescription>{translations.quiz.settingsDescription}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="title">Título do Quiz</Label>
+                <Label htmlFor="title">{translations.quiz.titleLabel}</Label>
                 <Input 
                   id="title" 
                   value={quiz.title} 
                   onChange={(e) => setQuiz({...quiz, title: e.target.value})}
-                  placeholder="Digite um título descritivo para o seu quiz"
+                  placeholder={translations.quiz.titlePlaceholder}
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="description">Descrição</Label>
+                <Label htmlFor="description">{translations.quiz.descriptionLabel}</Label>
                 <Textarea 
                   id="description" 
                   value={quiz.description} 
                   onChange={(e) => setQuiz({...quiz, description: e.target.value})}
-                  placeholder="Forneça instruções ou contexto para os participantes do quiz"
+                  placeholder={translations.quiz.descriptionPlaceholder}
                   rows={4}
                 />
               </div>
@@ -416,7 +497,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
               <Card key={question.id}>
                 <CardHeader className="pb-2">
                   <div className="flex justify-between">
-                    <CardTitle className="text-lg">Pergunta {questionIndex + 1}</CardTitle>
+                    <CardTitle className="text-lg">{translations.quiz.question} {questionIndex + 1}</CardTitle>
                     <div className="flex space-x-1">
                       <Button 
                         size="sm" 
@@ -454,7 +535,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                 </CardHeader>
                 <CardContent className="space-y-4 pt-0">
                   <div className="space-y-2">
-                    <Label htmlFor={`question-${questionIndex}`}>Texto da pergunta</Label>
+                    <Label htmlFor={`question-${questionIndex}`}>{translations.quiz.questionText}</Label>
                     <Textarea 
                       id={`question-${questionIndex}`} 
                       value={question.text} 
@@ -462,13 +543,13 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                         ...question, 
                         text: e.target.value
                       })}
-                      placeholder="Digite sua pergunta aqui"
+                      placeholder={translations.quiz.questionPlaceholder}
                     />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor={`question-type-${questionIndex}`}>Tipo de Pergunta</Label>
+                      <Label htmlFor={`question-type-${questionIndex}`}>{translations.quiz.questionType}</Label>
                       <Select 
                         value={question.type} 
                         onValueChange={(value: QuestionType) => updateQuestion(questionIndex, {
@@ -477,12 +558,12 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                         })}
                       >
                         <SelectTrigger id={`question-type-${questionIndex}`}>
-                          <SelectValue placeholder="Selecione o tipo de pergunta" />
+                          <SelectValue placeholder={translations.quiz.selectQuestionType} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="multiple-choice">Múltipla Escolha</SelectItem>
-                          <SelectItem value="checkbox">Caixas de Seleção</SelectItem>
-                          <SelectItem value="open-ended">Resposta Aberta</SelectItem>
+                          <SelectItem value="multiple-choice">{translations.quiz.multipleChoice}</SelectItem>
+                          <SelectItem value="checkbox">{translations.quiz.checkboxes}</SelectItem>
+                          <SelectItem value="open-ended">{translations.quiz.openEnded}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -496,21 +577,21 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                           required: checked
                         })}
                       />
-                      <Label htmlFor={`required-${questionIndex}`}>Pergunta Obrigatória</Label>
+                      <Label htmlFor={`required-${questionIndex}`}>{translations.quiz.requiredQuestion}</Label>
                     </div>
                   </div>
                   
                   {question.type !== 'open-ended' && (
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
-                        <Label>Opções</Label>
+                        <Label>{translations.quiz.options}</Label>
                         <Button 
                           size="sm" 
                           variant="outline" 
                           onClick={() => addOption(questionIndex)}
                         >
                           <Plus className="h-4 w-4 mr-1" />
-                          Adicionar Opção
+                          {translations.quiz.addOption}
                         </Button>
                       </div>
                       
@@ -523,7 +604,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                                 ...option, 
                                 text: e.target.value
                               })}
-                              placeholder={`Opção ${optionIndex + 1}`}
+                              placeholder={`${translations.quiz.option} ${optionIndex + 1}`}
                             />
                           </div>
                           <div className="w-24">
@@ -534,7 +615,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                                 ...option, 
                                 weight: parseInt(e.target.value) || 0
                               })}
-                              placeholder="Peso"
+                              placeholder={translations.quiz.weight}
                             />
                           </div>
                           <Button 
@@ -553,19 +634,169 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                   
                   <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="conditions">
-                      <AccordionTrigger>Lógica Condicional</AccordionTrigger>
+                      <AccordionTrigger>{translations.quiz.conditionalLogic}</AccordionTrigger>
                       <AccordionContent>
                         <div className="space-y-4 pt-2">
                           <div className="text-sm text-gray-500">
-                            Defina quando esta pergunta deve aparecer com base nas respostas anteriores.
-                            Se nenhuma condição for definida, a pergunta sempre aparecerá.
+                            {translations.quiz.conditionalDescription}
                           </div>
                           
-                          <div className="bg-gray-50 p-3 rounded-md">
-                            <div className="text-center text-sm text-gray-500">
-                              A edição avançada de condições estará disponível em uma atualização futura.
+                          {questionIndex > 0 && (
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              onClick={() => addCondition(questionIndex)}
+                            >
+                              <Plus className="h-4 w-4 mr-1" />
+                              {translations.quiz.addCondition}
+                            </Button>
+                          )}
+                          
+                          {question.conditions && question.conditions.length > 0 ? (
+                            <div className="space-y-4">
+                              {question.conditions.map((condition, conditionIndex) => {
+                                const dependentQuestion = quiz.questions.find(q => q.id === condition.questionId);
+                                
+                                return (
+                                  <div key={conditionIndex} className="space-y-2 border p-3 rounded-md">
+                                    <div className="flex justify-between items-center">
+                                      <Label>{translations.quiz.condition} {conditionIndex + 1}</Label>
+                                      <Button 
+                                        size="sm" 
+                                        variant="ghost" 
+                                        className="text-red-500 hover:text-red-700"
+                                        onClick={() => removeCondition(questionIndex, conditionIndex)}
+                                      >
+                                        <Trash className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                    
+                                    {conditionIndex > 0 && (
+                                      <div className="mb-2">
+                                        <Select
+                                          value={condition.logicalOperator || 'AND'}
+                                          onValueChange={(value) => updateCondition(questionIndex, conditionIndex, {
+                                            ...condition,
+                                            logicalOperator: value as 'AND' | 'OR'
+                                          })}
+                                        >
+                                          <SelectTrigger>
+                                            <SelectValue placeholder={translations.quiz.selectOperator} />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="AND">{translations.quiz.and}</SelectItem>
+                                            <SelectItem value="OR">{translations.quiz.or}</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                    )}
+                                    
+                                    <div className="grid grid-cols-3 gap-2">
+                                      <div>
+                                        <Select 
+                                          value={condition.questionId}
+                                          onValueChange={(value) => updateCondition(questionIndex, conditionIndex, {
+                                            ...condition,
+                                            questionId: value,
+                                            value: ''
+                                          })}
+                                        >
+                                          <SelectTrigger>
+                                            <SelectValue placeholder={translations.quiz.selectQuestion} />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {quiz.questions.slice(0, questionIndex).map((q, i) => (
+                                              <SelectItem key={q.id} value={q.id}>
+                                                {translations.quiz.question} {i + 1}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                      
+                                      <div>
+                                        <Select 
+                                          value={condition.operator}
+                                          onValueChange={(value: any) => updateCondition(questionIndex, conditionIndex, {
+                                            ...condition,
+                                            operator: value
+                                          })}
+                                        >
+                                          <SelectTrigger>
+                                            <SelectValue placeholder={translations.quiz.selectOperator} />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="equals">{translations.quiz.equals}</SelectItem>
+                                            <SelectItem value="not-equals">{translations.quiz.notEquals}</SelectItem>
+                                            <SelectItem value="contains">{translations.quiz.contains}</SelectItem>
+                                            <SelectItem value="greater-than">{translations.quiz.greaterThan}</SelectItem>
+                                            <SelectItem value="less-than">{translations.quiz.lessThan}</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                      
+                                      <div>
+                                        {dependentQuestion?.type === 'multiple-choice' ? (
+                                          <Select 
+                                            value={condition.value}
+                                            onValueChange={(value) => updateCondition(questionIndex, conditionIndex, {
+                                              ...condition,
+                                              value: value
+                                            })}
+                                          >
+                                            <SelectTrigger>
+                                              <SelectValue placeholder={translations.quiz.selectValue} />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {dependentQuestion.options?.map(option => (
+                                                <SelectItem key={option.id} value={option.id}>
+                                                  {option.text}
+                                                </SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                        ) : dependentQuestion?.type === 'checkbox' ? (
+                                          <Select 
+                                            value={condition.value}
+                                            onValueChange={(value) => updateCondition(questionIndex, conditionIndex, {
+                                              ...condition,
+                                              value: value
+                                            })}
+                                          >
+                                            <SelectTrigger>
+                                              <SelectValue placeholder={translations.quiz.selectValue} />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {dependentQuestion.options?.map(option => (
+                                                <SelectItem key={option.id} value={option.id}>
+                                                  {option.text}
+                                                </SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                        ) : (
+                                          <Input 
+                                            value={condition.value}
+                                            onChange={(e) => updateCondition(questionIndex, conditionIndex, {
+                                              ...condition,
+                                              value: e.target.value
+                                            })}
+                                            placeholder={translations.quiz.enterValue}
+                                          />
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
-                          </div>
+                          ) : (
+                            <div className="bg-gray-50 p-3 rounded-md">
+                              <div className="text-center text-sm text-gray-500">
+                                {translations.quiz.noConditions}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </AccordionContent>
                     </AccordionItem>
@@ -576,7 +807,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
             
             <Button onClick={addQuestion} className="w-full">
               <Plus className="h-4 w-4 mr-2" />
-              Adicionar Pergunta
+              {translations.quiz.addQuestion}
             </Button>
           </div>
         </TabsContent>
@@ -584,16 +815,16 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
         <TabsContent value="profiles">
           <Card>
             <CardHeader>
-              <CardTitle>Definições de Perfil</CardTitle>
+              <CardTitle>{translations.quiz.profileDefinitions}</CardTitle>
               <CardDescription>
-                Defina faixas de pontuação e perfis correspondentes para os resultados do quiz
+                {translations.quiz.profileDefinitionsDescription}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {quiz.profileRanges.map((range, index) => (
                 <div key={index} className="p-4 border rounded-md space-y-3">
                   <div className="flex justify-between items-center">
-                    <h3 className="font-medium">Perfil {index + 1}</h3>
+                    <h3 className="font-medium">{translations.quiz.profile} {index + 1}</h3>
                     <Button 
                       size="sm" 
                       variant="ghost" 
@@ -606,7 +837,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor={`min-${index}`}>Pontuação Mínima</Label>
+                      <Label htmlFor={`min-${index}`}>{translations.quiz.minScore}</Label>
                       <Input 
                         id={`min-${index}`} 
                         type="number" 
@@ -619,7 +850,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor={`max-${index}`}>Pontuação Máxima</Label>
+                      <Label htmlFor={`max-${index}`}>{translations.quiz.maxScore}</Label>
                       <Input 
                         id={`max-${index}`} 
                         type="number" 
@@ -633,7 +864,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor={`profile-${index}`}>Nome do Perfil</Label>
+                    <Label htmlFor={`profile-${index}`}>{translations.quiz.profileName}</Label>
                     <Input 
                       id={`profile-${index}`} 
                       value={range.profile} 
@@ -641,12 +872,12 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                         ...range, 
                         profile: e.target.value
                       })}
-                      placeholder="ex., Tipo de Liderança A"
+                      placeholder={translations.quiz.profileNamePlaceholder}
                     />
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor={`description-${index}`}>Descrição do Perfil</Label>
+                    <Label htmlFor={`description-${index}`}>{translations.quiz.profileDescription}</Label>
                     <Textarea 
                       id={`description-${index}`} 
                       value={range.description} 
@@ -654,7 +885,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
                         ...range, 
                         description: e.target.value
                       })}
-                      placeholder="Descreva as características deste perfil"
+                      placeholder={translations.quiz.profileDescriptionPlaceholder}
                       rows={3}
                     />
                   </div>
@@ -663,13 +894,12 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
               
               <Button onClick={addProfileRange} variant="outline" className="w-full">
                 <Plus className="h-4 w-4 mr-2" />
-                Adicionar Faixa de Perfil
+                {translations.quiz.addProfileRange}
               </Button>
             </CardContent>
             <CardFooter className="bg-gray-50 text-sm text-gray-500">
               <p>
-                O sistema calculará uma pontuação total com base nos pesos atribuídos a cada opção selecionada.
-                Em seguida, ele fará a correspondência da pontuação com a faixa de perfil apropriada definida aqui.
+                {translations.quiz.profileRangeExplanation}
               </p>
             </CardFooter>
           </Card>

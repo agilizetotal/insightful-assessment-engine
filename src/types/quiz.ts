@@ -11,6 +11,7 @@ export interface Condition {
   questionId: string;
   operator: 'equals' | 'not-equals' | 'greater-than' | 'less-than' | 'contains';
   value: string | number;
+  logicalOperator?: 'AND' | 'OR';
 }
 
 export interface Question {
@@ -52,4 +53,11 @@ export interface QuizResult {
   completedAt: string;
   userId?: string;
   isPremium: boolean;
+  userData?: UserData;
+}
+
+export interface UserData {
+  name: string;
+  email: string;
+  phone: string;
 }

@@ -10,6 +10,7 @@ import Auth from "./pages/auth/Auth";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import CreateQuiz from "./pages/admin/CreateQuiz";
+import CreateNewQuiz from "./pages/admin/CreateNewQuiz";
 import EditQuiz from "./pages/admin/EditQuiz";
 import Analytics from "./pages/admin/Analytics";
 import Settings from "./pages/admin/Settings";
@@ -47,6 +48,7 @@ const AppRoutes = () => {
           {/* Rotas protegidas */}
           <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
           <Route path="/admin/create" element={<ProtectedRoute><CreateQuiz /></ProtectedRoute>} />
+          <Route path="/admin/create-new" element={<ProtectedRoute><CreateNewQuiz /></ProtectedRoute>} />
           <Route path="/admin/edit/:quizId" element={<ProtectedRoute><EditQuiz /></ProtectedRoute>} />
           <Route path="/admin/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
           <Route path="/admin/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
