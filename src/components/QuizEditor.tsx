@@ -243,7 +243,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
         updatedAt: new Date().toISOString(),
       };
 
-      const { data: quizData, error: quizError } = await supabase
+      const { data: savedQuizData, error: quizError } = await supabase
         .from('quizzes')
         .upsert({
           id: updatedQuizData.id,
@@ -262,7 +262,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
 
       const questionsToInsert = updatedQuizData.questions.map((question, index) => ({
         id: question.id,
-        quiz_id: quizData.id,
+        quiz_id: savedQuizData.id,
         text: question.text,
         type: question.type,
         required: question.required,
@@ -274,7 +274,7 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
         await supabase
           .from('questions')
           .delete()
-          .eq('quiz_id', quizData.id);
+          .eq('quiz_id', savedQuizData.id);
 
         const { error: questionsError } = await supabase
           .from('questions')
@@ -314,11 +314,11 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview 
         await supabase
           .from('profile_ranges')
           .delete()
-          .eq('quiz_id', quizData.id);
+          .eq('quiz_id', savedQuizData.id);
 
         const rangesToInsert = updatedQuizData.profileRanges.map(range => ({
           id: crypto.randomUUID(),
-          quiz_id: quizData.id,
+          quiz_id: savedQuizData.id,
           min_score: range.min,
           max_score: range.max,
           profile: range.profile,
