@@ -72,7 +72,7 @@ const defaultCondition: Condition = {
   questionId: '',
   operator: 'equals',
   value: '',
-  logicalOperator: 'AND'
+  logical_operator: 'AND'
 };
 
 const defaultProfileRange: ProfileRange = {
@@ -676,10 +676,10 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview,
                                     {conditionIndex > 0 && (
                                       <div className="mb-2">
                                         <Select
-                                          value={condition.logicalOperator || 'AND'}
+                                          value={condition.logical_operator || 'AND'}
                                           onValueChange={(value) => updateCondition(questionIndex, conditionIndex, {
                                             ...condition,
-                                            logicalOperator: value as 'AND' | 'OR'
+                                            logical_operator: value as 'AND' | 'OR'
                                           })}
                                         >
                                           <SelectTrigger>

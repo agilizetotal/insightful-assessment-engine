@@ -90,7 +90,7 @@ const TakeQuiz = () => {
               questionId: cond.question_id,
               operator: cond.operator as any,
               value: cond.value,
-              logicalOperator: (cond.logical_operator as 'AND' | 'OR') || 'AND'
+              logical_operator: cond.logical_operator as 'AND' | 'OR' || 'AND'
             })) : []
           };
         }));

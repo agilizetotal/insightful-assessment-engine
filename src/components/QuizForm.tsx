@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -70,9 +69,9 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
           }
           
           // First condition or explicitly marked as AND
-          if (index === 0 || condition.logicalOperator === 'AND') {
+          if (index === 0 || condition.logical_operator === 'AND') {
             andConditions.push(conditionMet);
-          } else if (condition.logicalOperator === 'OR') {
+          } else if (condition.logical_operator === 'OR') {
             orConditions.push(conditionMet);
           }
         });
