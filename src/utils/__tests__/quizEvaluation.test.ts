@@ -12,13 +12,13 @@ describe('evaluateCondition', () => {
 
   test('equals operator works correctly', () => {
     expect(evaluateCondition({
-      operator: 'equals',
+      operator: 'equals' as const,
       question_id: 'q1',
       value: 'yes'
     }, answers)).toBe(true);
 
     expect(evaluateCondition({
-      operator: 'equals',
+      operator: 'equals' as const,
       question_id: 'q1',
       value: 'no'
     }, answers)).toBe(false);
@@ -65,10 +65,10 @@ describe('evaluateConditions', () => {
 
   test('evaluates single condition correctly', () => {
     const conditions = [{
-      operator: 'equals',
+      operator: 'equals' as const,
       question_id: 'q1',
       value: 'yes',
-      logical_operator: 'AND'
+      logical_operator: 'AND' as const
     }];
 
     expect(evaluateConditions(conditions, answers)).toBe(true);
@@ -77,16 +77,16 @@ describe('evaluateConditions', () => {
   test('evaluates AND conditions correctly', () => {
     const conditions = [
       {
-        operator: 'equals',
+        operator: 'equals' as const,
         question_id: 'q1',
         value: 'yes',
-        logical_operator: 'AND'
+        logical_operator: 'AND' as const
       },
       {
-        operator: 'equals',
+        operator: 'equals' as const,
         question_id: 'q2',
         value: '5',
-        logical_operator: 'AND'
+        logical_operator: 'AND' as const
       }
     ];
 

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import QuizForm from "@/components/QuizForm";
@@ -12,6 +11,7 @@ import { useQuizData } from "@/hooks/useQuizData";
 import { QuizLoading } from "@/components/quiz/QuizLoading";
 import { QuizError } from "@/components/quiz/QuizError";
 import { saveQuizResponses, calculateQuizResult } from "@/utils/quizEvaluation";
+import { QuizErrorBoundary } from "@/components/quiz/QuizErrorBoundary";
 
 const TakeQuiz = () => {
   const { quizId } = useParams();
@@ -68,11 +68,19 @@ const TakeQuiz = () => {
   };
   
   if (loading) {
-    return <QuizLoading />;
+    return (
+      <QuizErrorBoundary>
+        <QuizLoading />
+      </QuizErrorBoundary>
+    );
   }
   
   if (error) {
-    return <QuizError error={error} />;
+    return (
+      <QuizErrorBoundary>
+        <QuizError error={error} />
+      </QuizErrorBoundary>
+    );
   }
   
   if (!quiz) {
@@ -80,49 +88,51 @@ const TakeQuiz = () => {
   }
   
   return (
-    <div className="container mx-auto p-4">
-      {!showingResults ? (
-        <div className="max-w-3xl mx-auto">
-          <div className="mb-8">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate('/')}
-              className="mb-4"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              {translations.common.backToHome}
-            </Button>
-            <div className="text-center">
-              <h1 className="text-2xl md:text-3xl font-bold mb-2">{quiz.title}</h1>
-              <p className="text-gray-600 max-w-xl mx-auto">{quiz.description}</p>
-            </div>
-          </div>
-          <QuizForm quiz={quiz} onComplete={handleCompleteQuiz} />
-        </div>
-      ) : (
-        <>
-          {quizResult && (
-            <>
-              <div className="mb-4">
-                <Button 
-                  variant="ghost" 
-                  onClick={handleRetakeQuiz}
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  {translations.quiz.retakeQuiz}
-                </Button>
+    <QuizErrorBoundary>
+      <div className="container mx-auto p-4">
+        {!showingResults ? (
+          <div className="max-w-3xl mx-auto">
+            <div className="mb-8">
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate('/')}
+                className="mb-4"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                {translations.common.backToHome}
+              </Button>
+              <div className="text-center">
+                <h1 className="text-2xl md:text-3xl font-bold mb-2">{quiz.title}</h1>
+                <p className="text-gray-600 max-w-xl mx-auto">{quiz.description}</p>
               </div>
-              <ResultsSummary 
-                quiz={quiz} 
-                result={quizResult} 
-                onSendEmail={handleSendEmail}
-                onUpgrade={handleUpgrade}
-              />
-            </>
-          )}
-        </>
-      )}
-    </div>
+            </div>
+            <QuizForm quiz={quiz} onComplete={handleCompleteQuiz} />
+          </div>
+        ) : (
+          <>
+            {quizResult && (
+              <>
+                <div className="mb-4">
+                  <Button 
+                    variant="ghost" 
+                    onClick={handleRetakeQuiz}
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    {translations.quiz.retakeQuiz}
+                  </Button>
+                </div>
+                <ResultsSummary 
+                  quiz={quiz} 
+                  result={quizResult} 
+                  onSendEmail={handleSendEmail}
+                  onUpgrade={handleUpgrade}
+                />
+              </>
+            )}
+          </>
+        )}
+      </div>
+    </QuizErrorBoundary>
   );
 };
 

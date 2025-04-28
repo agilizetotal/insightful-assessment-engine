@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Quiz } from "@/types/quiz";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,9 +76,9 @@ export const useQuizData = (quizId: string | undefined) => {
             })),
             conditions: conditionsData ? conditionsData.map(cond => ({
               questionId: cond.question_id,
-              operator: cond.operator as any,
+              operator: cond.operator as "equals" | "not-equals" | "greater-than" | "less-than" | "contains",
               value: cond.value,
-              logical_operator: cond.logical_operator as 'AND' | 'OR' || 'AND'
+              logical_operator: (cond.logical_operator || 'AND') as 'AND' | 'OR'
             })) : []
           };
         }));
