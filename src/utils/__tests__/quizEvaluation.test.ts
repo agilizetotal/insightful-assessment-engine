@@ -1,123 +1,92 @@
 
-import { calculateQuizResult, evaluateCondition, evaluateConditions } from '../quizEvaluation';
-import { Quiz, QuizResponse, UserData } from '@/types/quiz';
+import { describe, it, expect } from 'vitest';
+import { evaluateCondition, evaluateConditions, calculateQuizResult } from '../quizEvaluation';
+import { Quiz, QuizResponse } from '@/types/quiz';
 
 describe('evaluateCondition', () => {
-  const answers = {
-    'q1': 'yes',
-    'q2': '5',
-    'q3': ['option1', 'option2'],
-    'q4': 'test string'
-  };
-
-  test('equals operator works correctly', () => {
-    expect(evaluateCondition({
-      operator: 'equals' as const,
-      question_id: 'q1',
-      value: 'yes'
-    }, answers)).toBe(true);
-
-    expect(evaluateCondition({
-      operator: 'equals' as const,
-      question_id: 'q1',
-      value: 'no'
-    }, answers)).toBe(false);
+  it('should evaluate equals condition correctly', () => {
+    expect(evaluateCondition('equals', 'value1', 'value1')).toBe(true);
+    expect(evaluateCondition('equals', 'value1', 'value2')).toBe(false);
   });
 
-  test('not-equals operator works correctly', () => {
-    expect(evaluateCondition({
-      operator: 'not-equals',
-      question_id: 'q1',
-      value: 'no'
-    }, answers)).toBe(true);
+  it('should evaluate not-equals condition correctly', () => {
+    expect(evaluateCondition('not-equals', 'value1', 'value2')).toBe(true);
+    expect(evaluateCondition('not-equals', 'value1', 'value1')).toBe(false);
   });
 
-  test('greater-than operator works correctly', () => {
-    expect(evaluateCondition({
-      operator: 'greater-than',
-      question_id: 'q2',
-      value: '3'
-    }, answers)).toBe(true);
+  it('should evaluate greater-than condition correctly', () => {
+    expect(evaluateCondition('greater-than', '5', '3')).toBe(true);
+    expect(evaluateCondition('greater-than', '3', '5')).toBe(false);
   });
 
-  test('less-than operator works correctly', () => {
-    expect(evaluateCondition({
-      operator: 'less-than',
-      question_id: 'q2',
-      value: '10'
-    }, answers)).toBe(true);
+  it('should evaluate less-than condition correctly', () => {
+    expect(evaluateCondition('less-than', '3', '5')).toBe(true);
+    expect(evaluateCondition('less-than', '5', '3')).toBe(false);
   });
 
-  test('contains operator works correctly', () => {
-    expect(evaluateCondition({
-      operator: 'contains',
-      question_id: 'q3',
-      value: 'option1'
-    }, answers)).toBe(true);
+  it('should evaluate contains condition correctly', () => {
+    expect(evaluateCondition('contains', 'abc', 'a')).toBe(true);
+    expect(evaluateCondition('contains', 'abc', 'd')).toBe(false);
   });
 });
 
 describe('evaluateConditions', () => {
-  const answers = {
-    'q1': 'yes',
-    'q2': '5'
-  };
+  const responses = [
+    { questionId: 'q1', answer: 'answer1' },
+    { questionId: 'q2', answer: 'answer2' },
+    { questionId: 'q3', answer: 'answer3' },
+  ];
 
-  test('evaluates single condition correctly', () => {
-    const conditions = [{
-      operator: 'equals' as const,
-      question_id: 'q1',
-      value: 'yes',
-      logical_operator: 'AND' as const
-    }];
-
-    expect(evaluateConditions(conditions, answers)).toBe(true);
+  it('should return true when no conditions provided', () => {
+    expect(evaluateConditions([], responses)).toBe(true);
   });
 
-  test('evaluates AND conditions correctly', () => {
+  it('should evaluate single condition correctly', () => {
     const conditions = [
-      {
-        operator: 'equals' as const,
-        question_id: 'q1',
-        value: 'yes',
-        logical_operator: 'AND' as const
-      },
-      {
-        operator: 'equals' as const,
-        question_id: 'q2',
-        value: '5',
-        logical_operator: 'AND' as const
-      }
+      { questionId: 'q1', operator: 'equals' as const, value: 'answer1' }
     ];
+    expect(evaluateConditions(conditions, responses)).toBe(true);
 
-    expect(evaluateConditions(conditions, answers)).toBe(true);
+    const failingConditions = [
+      { questionId: 'q1', operator: 'equals' as const, value: 'wrong' }
+    ];
+    expect(evaluateConditions(failingConditions, responses)).toBe(false);
   });
 
-  test('evaluates OR conditions correctly', () => {
+  it('should evaluate multiple conditions with AND correctly', () => {
     const conditions = [
-      {
-        operator: 'equals',
-        question_id: 'q1',
-        value: 'no',
-        logical_operator: 'OR'
-      },
-      {
-        operator: 'equals',
-        question_id: 'q2',
-        value: '5',
-        logical_operator: 'OR'
-      }
+      { questionId: 'q1', operator: 'equals' as const, value: 'answer1', logical_operator: 'AND' as const },
+      { questionId: 'q2', operator: 'equals' as const, value: 'answer2', logical_operator: 'AND' as const }
     ];
+    expect(evaluateConditions(conditions, responses)).toBe(true);
 
-    expect(evaluateConditions(conditions, answers)).toBe(true);
+    const failingConditions = [
+      { questionId: 'q1', operator: 'equals' as const, value: 'answer1', logical_operator: 'AND' as const },
+      { questionId: 'q2', operator: 'equals' as const, value: 'wrong', logical_operator: 'AND' as const }
+    ];
+    expect(evaluateConditions(failingConditions, responses)).toBe(false);
+  });
+
+  it('should evaluate multiple conditions with OR correctly', () => {
+    const conditions = [
+      { questionId: 'q1', operator: 'equals' as const, value: 'wrong', logical_operator: 'OR' as const },
+      { questionId: 'q2', operator: 'equals' as const, value: 'answer2', logical_operator: 'OR' as const }
+    ];
+    expect(evaluateConditions(conditions, responses)).toBe(true);
+
+    const failingConditions = [
+      { questionId: 'q1', operator: 'equals' as const, value: 'wrong', logical_operator: 'OR' as const },
+      { questionId: 'q2', operator: 'equals' as const, value: 'also-wrong', logical_operator: 'OR' as const }
+    ];
+    expect(evaluateConditions(failingConditions, responses)).toBe(false);
   });
 });
 
 describe('calculateQuizResult', () => {
   const mockQuiz: Quiz = {
-    id: '1',
+    id: 'quiz1',
     title: 'Test Quiz',
-    description: 'Test Description',
+    description: 'A test quiz',
     questions: [
       {
         id: 'q1',
@@ -125,8 +94,8 @@ describe('calculateQuizResult', () => {
         type: 'multiple-choice',
         required: true,
         options: [
-          { id: 'opt1', text: 'Option 1', weight: 2 },
-          { id: 'opt2', text: 'Option 2', weight: 1 }
+          { id: 'opt1', text: 'Option 1', weight: 5 },
+          { id: 'opt2', text: 'Option 2', weight: 10 }
         ]
       },
       {
@@ -136,62 +105,48 @@ describe('calculateQuizResult', () => {
         required: true,
         options: [
           { id: 'opt3', text: 'Option 3', weight: 3 },
-          { id: 'opt4', text: 'Option 4', weight: 1 }
+          { id: 'opt4', text: 'Option 4', weight: 7 }
         ]
+      },
+      {
+        id: 'q3',
+        text: 'Question 3',
+        type: 'open-ended',
+        required: false
       }
     ],
     profileRanges: [
-      {
-        min: 0,
-        max: 3,
-        profile: 'Beginner',
-        description: 'Beginner level'
-      },
-      {
-        min: 4,
-        max: 7,
-        profile: 'Advanced',
-        description: 'Advanced level'
-      }
+      { min: 0, max: 10, profile: 'Beginner', description: 'You are a beginner' },
+      { min: 11, max: 20, profile: 'Intermediate', description: 'You are intermediate' },
+      { min: 21, max: 100, profile: 'Advanced', description: 'You are advanced' }
     ],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    createdAt: '2023-01-01',
+    updatedAt: '2023-01-01'
   };
 
-  const mockResponses: QuizResponse[] = [
-    {
-      questionId: 'q1',
-      answer: 'opt1'
-    },
-    {
-      questionId: 'q2',
-      answer: ['opt3', 'opt4']
-    }
-  ];
+  it('should calculate score and assign correct profile', () => {
+    const responses: QuizResponse[] = [
+      { questionId: 'q1', answer: 'opt1' }, // 5 points
+      { questionId: 'q2', answer: ['opt3', 'opt4'] }, // 10 points
+      { questionId: 'q3', answer: 'This is an open-ended response' } // 0 points (open-ended)
+    ];
 
-  const mockUserData: UserData = {
-    name: 'Test User',
-    email: 'test@example.com',
-    phone: '1234567890'
-  };
-
-  test('calculates score correctly', () => {
-    const result = calculateQuizResult(mockQuiz, mockResponses, mockUserData);
+    const userData = { name: 'Test User', email: 'test@example.com', phone: '123456789' };
     
-    // Expected score:
-    // Q1: opt1 = 2 points
-    // Q2: opt3 = 3 points, opt4 = 1 point
-    // Total = 6 points
-    expect(result.score).toBe(6);
+    const result = calculateQuizResult(mockQuiz, responses, userData);
+    
+    expect(result.score).toBe(15);
+    expect(result.profile).toBe('Intermediate');
+    expect(result.userData).toBe(userData);
+    expect(result.quizId).toBe('quiz1');
+    expect(result.responses).toEqual(responses);
+    expect(typeof result.completedAt).toBe('string');
   });
 
-  test('assigns correct profile based on score', () => {
-    const result = calculateQuizResult(mockQuiz, mockResponses, mockUserData);
-    expect(result.profile).toBe('Advanced'); // Score 6 falls in Advanced range (4-7)
-  });
-
-  test('includes user data in result', () => {
-    const result = calculateQuizResult(mockQuiz, mockResponses, mockUserData);
-    expect(result.userData).toEqual(mockUserData);
+  it('should handle empty responses', () => {
+    const result = calculateQuizResult(mockQuiz, [], { name: '', email: '', phone: '' });
+    
+    expect(result.score).toBe(0);
+    expect(result.profile).toBe('Beginner');
   });
 });

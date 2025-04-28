@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Quiz } from "@/types/quiz";
 import { supabase } from "@/integrations/supabase/client";

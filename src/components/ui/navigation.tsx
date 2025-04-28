@@ -1,11 +1,21 @@
 
-import { Home, Plus } from "lucide-react";
+import { Home, Plus, LogOut, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "./button";
 import { translations } from "@/locales/pt-BR";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function Navigation() {
   const location = useLocation();
+  const { user, signOut } = useAuth();
   
   // Não mostrar a navegação na página inicial
   if (location.pathname === "/") {
@@ -36,6 +46,25 @@ export function Navigation() {
               {translations.quiz.createNew}
             </Link>
           </Button>
+        )}
+        
+        {user && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="ml-2">
+                <User className="h-4 w-4 mr-2" />
+                {user.email}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Conta</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={signOut} className="text-red-500 cursor-pointer">
+                <LogOut className="h-4 w-4 mr-2" />
+                {translations.auth.logout}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
     </div>
