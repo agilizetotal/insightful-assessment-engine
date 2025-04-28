@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import QuizForm from "@/components/QuizForm";
@@ -134,17 +133,17 @@ const TakeQuiz = () => {
   
   const evaluateCondition = (
     condition: {
-      created_at: string;
-      dependent_question_id: string;
-      id: string;
+      created_at?: string;
+      dependent_question_id?: string;
+      id?: string;
       operator: "equals" | "not-equals" | "greater-than" | "less-than" | "contains";
-      question_id: string;
+      question_id?: string;
       value: string;
       logical_operator?: "AND" | "OR";
     },
     answers: Record<string, any>
   ): boolean => {
-    const dependentAnswer = answers[condition.question_id];
+    const dependentAnswer = answers[condition.question_id || ''];
     const conditionValue = condition.value;
     
     switch (condition.operator) {
@@ -165,11 +164,11 @@ const TakeQuiz = () => {
   
   const evaluateConditions = (
     conditions: {
-      created_at: string;
-      dependent_question_id: string;
-      id: string;
+      created_at?: string;
+      dependent_question_id?: string;
+      id?: string;
       operator: "equals" | "not-equals" | "greater-than" | "less-than" | "contains";
-      question_id: string;
+      question_id?: string;
       value: string;
       logical_operator?: "AND" | "OR";
     }[],

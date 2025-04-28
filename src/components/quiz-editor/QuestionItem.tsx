@@ -156,7 +156,7 @@ export const QuestionItem = ({
                 question={question}
                 questionIndex={questionIndex}
                 previousQuestions={previousQuestions}
-                onUpdateCondition={handleUpdateCondition}
+                onUpdateCondition={(conditionIndex, condition) => handleUpdateCondition(conditionIndex, condition)}
                 onAddCondition={() => {}}
                 onRemoveCondition={() => {}}
               />
