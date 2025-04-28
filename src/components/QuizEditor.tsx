@@ -1,39 +1,26 @@
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Save, Play } from "lucide-react";
+import { Save, Play } from "lucide-react";
 import { Quiz } from "@/types/quiz";
-import { useAuth } from "@/contexts/AuthContext";
 import { translations } from "@/locales/pt-BR";
 import { GeneralSettings } from "./quiz-editor/GeneralSettings";
 import { ProfileRanges } from "./quiz-editor/ProfileRanges";
 import { QuestionsList } from "./quiz-editor/QuestionsList";
-import { useQuestions } from "@/hooks/useQuestions";
-import { useQuizSave } from "@/hooks/useQuizSave";
+import { useQuizEditor } from "@/hooks/useQuizEditor";
 
 interface QuizEditorProps {
-  initialQuiz?: Quiz;
+  initialQuiz: Quiz;
   onSave: (quiz: Quiz) => void;
   onPreview: (quiz: Quiz) => void;
   isNewQuiz?: boolean;
 }
 
-const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview, isNewQuiz = false }) => {
-  const [quiz, setQuiz] = useState<Quiz>(initialQuiz || {
-    id: crypto.randomUUID(),
-    title: '',
-    description: '',
-    questions: [],
-    profileRanges: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-  
-  const { user } = useAuth();
-  const { isSaving, saveToSupabase } = useQuizSave();
-  
+const QuizEditor = ({ initialQuiz, onSave, onPreview, isNewQuiz = false }: QuizEditorProps) => {
   const {
+    quiz,
+    setQuiz,
+    isSaving,
     questions,
     addQuestion,
     updateQuestion,
@@ -42,15 +29,9 @@ const QuizEditor: React.FC<QuizEditorProps> = ({ initialQuiz, onSave, onPreview,
     duplicateQuestion,
     addOption,
     updateOption,
-    removeOption
-  } = useQuestions(quiz, setQuiz);
-  
-  const handleSave = async () => {
-    const updatedQuiz = await saveToSupabase(quiz);
-    if (updatedQuiz) {
-      onSave(updatedQuiz);
-    }
-  };
+    removeOption,
+    handleSave
+  } = useQuizEditor(initialQuiz, onSave, onPreview);
   
   return (
     <div className="container mx-auto p-4">
