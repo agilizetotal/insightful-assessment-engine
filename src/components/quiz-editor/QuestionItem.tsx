@@ -156,7 +156,10 @@ export const QuestionItem = ({
                 question={question}
                 questionIndex={questionIndex}
                 previousQuestions={previousQuestions}
-                onUpdateCondition={(conditionIndex, condition) => handleUpdateCondition(conditionIndex, condition)}
+                onUpdateCondition={(questionIndex: number, conditionIndex: number, condition: Condition) => {
+                  // Adapter function que ignora o parâmetro questionIndex que não é necessário aqui
+                  handleUpdateCondition(conditionIndex, condition);
+                }}
                 onAddCondition={() => {}}
                 onRemoveCondition={() => {}}
               />
