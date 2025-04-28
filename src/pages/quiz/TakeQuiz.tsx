@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import QuizForm from "@/components/QuizForm";
@@ -143,7 +144,7 @@ const TakeQuiz = () => {
     },
     answers: Record<string, any>
   ): boolean => {
-    const dependentAnswer = answers[condition.dependent_question_id];
+    const dependentAnswer = answers[condition.question_id];
     const conditionValue = condition.value;
     
     switch (condition.operator) {

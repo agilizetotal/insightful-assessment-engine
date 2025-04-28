@@ -1,5 +1,5 @@
 
-import { Question, Option, QuestionType } from '@/types/quiz';
+import { Question, Option, QuestionType, Condition } from '@/types/quiz';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
