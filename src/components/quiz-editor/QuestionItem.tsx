@@ -25,6 +25,9 @@ interface QuestionItemProps {
   onAddOption: () => void;
   onUpdateOption: (optionIndex: number, updatedOption: Option) => void;
   onRemoveOption: (optionIndex: number) => void;
+  onAddCondition: () => void;
+  onUpdateCondition: (conditionIndex: number, condition: Condition) => void;
+  onRemoveCondition: (conditionIndex: number) => void;
 }
 
 export const QuestionItem = ({
@@ -39,18 +42,11 @@ export const QuestionItem = ({
   onDuplicateQuestion,
   onAddOption,
   onUpdateOption,
-  onRemoveOption
+  onRemoveOption,
+  onAddCondition,
+  onUpdateCondition,
+  onRemoveCondition
 }: QuestionItemProps) => {
-  const handleUpdateCondition = (conditionIndex: number, condition: Condition) => {
-    const updatedConditions = [...(question.conditions || [])];
-    updatedConditions[conditionIndex] = condition;
-    
-    onUpdateQuestion({
-      ...question,
-      conditions: updatedConditions
-    });
-  };
-
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -156,12 +152,11 @@ export const QuestionItem = ({
                 question={question}
                 questionIndex={questionIndex}
                 previousQuestions={previousQuestions}
-                onUpdateCondition={(questionIndex: number, conditionIndex: number, condition: Condition) => {
-                  // Adapter function que ignora o parâmetro questionIndex que não é necessário aqui
-                  handleUpdateCondition(conditionIndex, condition);
+                onUpdateCondition={(questionIdx, conditionIndex, condition) => {
+                  onUpdateCondition(conditionIndex, condition);
                 }}
-                onAddCondition={() => {}}
-                onRemoveCondition={() => {}}
+                onAddCondition={() => onAddCondition()}
+                onRemoveCondition={(questionIdx, conditionIndex) => onRemoveCondition(conditionIndex)}
               />
             </AccordionContent>
           </AccordionItem>

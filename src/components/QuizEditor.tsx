@@ -30,7 +30,11 @@ const QuizEditor = ({ initialQuiz, onSave, onPreview, isNewQuiz = false }: QuizE
     addOption,
     updateOption,
     removeOption,
-    handleSave
+    addCondition,
+    updateCondition,
+    removeCondition,
+    handleSave,
+    handlePreview
   } = useQuizEditor(initialQuiz, onSave, onPreview);
   
   return (
@@ -38,7 +42,7 @@ const QuizEditor = ({ initialQuiz, onSave, onPreview, isNewQuiz = false }: QuizE
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">{translations.quiz.editor}</h1>
         <div className="space-x-2">
-          <Button onClick={() => onPreview(quiz)} variant="outline" disabled={isSaving}>
+          <Button onClick={handlePreview} variant="outline" disabled={isSaving}>
             <Play className="h-4 w-4 mr-2" />
             {translations.common.preview}
           </Button>
@@ -71,6 +75,9 @@ const QuizEditor = ({ initialQuiz, onSave, onPreview, isNewQuiz = false }: QuizE
             onAddOption={addOption}
             onUpdateOption={updateOption}
             onRemoveOption={removeOption}
+            onAddCondition={addCondition}
+            onUpdateCondition={updateCondition}
+            onRemoveCondition={removeCondition}
           />
         </TabsContent>
         

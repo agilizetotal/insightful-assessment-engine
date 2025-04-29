@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
-import { Quiz, Question, QuizResponse, UserData } from '@/types/quiz';
+import { Quiz, Question, QuizResponse, UserData, Condition } from '@/types/quiz';
 import { translations } from '@/locales/pt-BR';
 
 interface QuizFormProps {
@@ -25,64 +26,79 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
     phone: ''
   });
   
+  // Function to evaluate if a condition is met
+  const evaluateCondition = (condition: Condition): boolean => {
+    const response = responses.find(r => r.questionId === condition.questionId);
+    if (!response) return false;
+    
+    switch(condition.operator) {
+      case 'equals':
+        if (Array.isArray(response.answer)) {
+          return response.answer.includes(condition.value);
+        }
+        return response.answer === condition.value;
+      
+      case 'not-equals':
+        if (Array.isArray(response.answer)) {
+          return !response.answer.includes(condition.value);
+        }
+        return response.answer !== condition.value;
+      
+      case 'greater-than':
+        const numResponse = Number(response.answer);
+        const numValue = Number(condition.value);
+        return !isNaN(numResponse) && !isNaN(numValue) && numResponse > numValue;
+      
+      case 'less-than':
+        const numResp = Number(response.answer);
+        const numVal = Number(condition.value);
+        return !isNaN(numResp) && !isNaN(numVal) && numResp < numVal;
+      
+      case 'contains':
+        if (Array.isArray(response.answer)) {
+          return response.answer.includes(condition.value);
+        }
+        return String(response.answer).includes(condition.value);
+      
+      default:
+        return false;
+    }
+  };
+  
+  // Function to evaluate if a question should be shown based on its conditions
+  const shouldShowQuestion = (question: Question): boolean => {
+    if (!question.conditions || question.conditions.length === 0) {
+      return true;
+    }
+    
+    // Group conditions by logical operator
+    let andConditions: boolean[] = [];
+    let orConditions: boolean[] = [];
+    
+    question.conditions.forEach((condition, index) => {
+      const conditionMet = evaluateCondition(condition);
+      
+      if (index === 0 || condition.logical_operator === 'AND') {
+        andConditions.push(conditionMet);
+      } else if (condition.logical_operator === 'OR') {
+        orConditions.push(conditionMet);
+      }
+    });
+    
+    // All AND conditions must be met
+    const andResult = andConditions.length === 0 || andConditions.every(c => c);
+    
+    // At least one OR condition must be met (if any)
+    const orResult = orConditions.length === 0 || orConditions.some(c => c);
+    
+    return andResult && orResult;
+  };
+  
   useEffect(() => {
     // Only run this when we've moved past the user data form
     if (currentQuestionIndex >= 0) {
       // Filter questions based on conditional logic
-      const filteredQuestions = quiz.questions.filter(question => {
-        if (!question.conditions || question.conditions.length === 0) {
-          return true;
-        }
-        
-        // Group conditions by logical operator (AND/OR)
-        const andConditions: boolean[] = [];
-        const orConditions: boolean[] = [];
-        
-        question.conditions.forEach((condition, index) => {
-          const response = responses.find(r => r.questionId === condition.questionId);
-          if (!response) {
-            andConditions.push(false);
-            return;
-          }
-          
-          let conditionMet = false;
-          
-          switch(condition.operator) {
-            case 'equals':
-              conditionMet = response.answer === condition.value;
-              break;
-            case 'not-equals':
-              conditionMet = response.answer !== condition.value;
-              break;
-            case 'greater-than':
-              conditionMet = Number(response.answer) > Number(condition.value);
-              break;
-            case 'less-than':
-              conditionMet = Number(response.answer) < Number(condition.value);
-              break;
-            case 'contains':
-              conditionMet = Array.isArray(response.answer) && 
-                response.answer.includes(condition.value.toString());
-              break;
-            default:
-              conditionMet = false;
-          }
-          
-          // First condition or explicitly marked as AND
-          if (index === 0 || condition.logical_operator === 'AND') {
-            andConditions.push(conditionMet);
-          } else if (condition.logical_operator === 'OR') {
-            orConditions.push(conditionMet);
-          }
-        });
-        
-        // Check if all AND conditions are met AND at least one OR condition is met (if any)
-        const andResult = andConditions.length === 0 || andConditions.every(c => c);
-        const orResult = orConditions.length === 0 || orConditions.some(c => c);
-        
-        return andResult && orResult;
-      });
-      
+      const filteredQuestions = quiz.questions.filter(shouldShowQuestion);
       setActiveQuestions(filteredQuestions);
     }
   }, [quiz.questions, responses, currentQuestionIndex]);

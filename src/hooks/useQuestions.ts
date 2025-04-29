@@ -1,7 +1,7 @@
 
 import { useState } from "react";
-import { Quiz, Question, Option } from "@/types/quiz";
-import { defaultQuestion, defaultOption } from "@/components/quiz-editor/defaults";
+import { Quiz, Question, Option, Condition } from "@/types/quiz";
+import { defaultQuestion, defaultOption, defaultCondition } from "@/components/quiz-editor/defaults";
 
 export const useQuestions = (initialQuiz: Quiz, onQuizUpdate: (updatedQuiz: Quiz) => void) => {
   const [quiz, setQuiz] = useState<Quiz>(initialQuiz);
@@ -80,6 +80,10 @@ export const useQuestions = (initialQuiz: Quiz, onQuizUpdate: (updatedQuiz: Quiz
       options: questionToDuplicate.options?.map(option => ({
         ...option,
         id: crypto.randomUUID()
+      })),
+      conditions: questionToDuplicate.conditions?.map(condition => ({
+        ...condition,
+        id: crypto.randomUUID()
       }))
     };
     
@@ -129,6 +133,44 @@ export const useQuestions = (initialQuiz: Quiz, onQuizUpdate: (updatedQuiz: Quiz
       options: updatedOptions
     });
   };
+  
+  // New functions for handling conditions
+  const addCondition = (questionIndex: number) => {
+    const question = quiz.questions[questionIndex];
+    const newCondition: Condition = {
+      ...defaultCondition,
+      questionId: question.id !== quiz.questions[0].id ? quiz.questions[0].id : '',
+      logical_operator: question.conditions && question.conditions.length > 0 ? 'AND' : undefined
+    };
+    
+    const updatedConditions = [...(question.conditions || []), newCondition];
+    
+    updateQuestion(questionIndex, {
+      ...question,
+      conditions: updatedConditions
+    });
+  };
+  
+  const updateCondition = (questionIndex: number, conditionIndex: number, updatedCondition: Condition) => {
+    const question = quiz.questions[questionIndex];
+    const updatedConditions = [...(question.conditions || [])];
+    updatedConditions[conditionIndex] = updatedCondition;
+    
+    updateQuestion(questionIndex, {
+      ...question,
+      conditions: updatedConditions
+    });
+  };
+  
+  const removeCondition = (questionIndex: number, conditionIndex: number) => {
+    const question = quiz.questions[questionIndex];
+    const updatedConditions = (question.conditions || []).filter((_, i) => i !== conditionIndex);
+    
+    updateQuestion(questionIndex, {
+      ...question,
+      conditions: updatedConditions
+    });
+  };
 
   return {
     questions: quiz.questions,
@@ -139,6 +181,9 @@ export const useQuestions = (initialQuiz: Quiz, onQuizUpdate: (updatedQuiz: Quiz
     duplicateQuestion,
     addOption,
     updateOption,
-    removeOption
+    removeOption,
+    addCondition,
+    updateCondition,
+    removeCondition
   };
 };

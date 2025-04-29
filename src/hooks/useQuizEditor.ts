@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Quiz } from '@/types/quiz';
+import { Quiz, Condition } from '@/types/quiz';
 import { useQuestions } from './useQuestions';
 import { useQuizSave } from './useQuizSave';
 
@@ -21,7 +21,10 @@ export const useQuizEditor = (
     duplicateQuestion,
     addOption,
     updateOption,
-    removeOption
+    removeOption,
+    addCondition,
+    updateCondition,
+    removeCondition
   } = useQuestions(quiz, setQuiz);
 
   const handleSave = async () => {
@@ -48,6 +51,9 @@ export const useQuizEditor = (
     addOption,
     updateOption,
     removeOption,
+    addCondition,
+    updateCondition,
+    removeCondition,
     handleSave,
     handlePreview
   };

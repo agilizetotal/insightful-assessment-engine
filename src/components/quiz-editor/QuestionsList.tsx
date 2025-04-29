@@ -1,5 +1,5 @@
 
-import { Question, Option } from '@/types/quiz';
+import { Question, Option, Condition } from '@/types/quiz';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { translations } from '@/locales/pt-BR';
@@ -15,6 +15,9 @@ interface QuestionsListProps {
   onAddOption: (questionIndex: number) => void;
   onUpdateOption: (questionIndex: number, optionIndex: number, updatedOption: Option) => void;
   onRemoveOption: (questionIndex: number, optionIndex: number) => void;
+  onAddCondition: (questionIndex: number) => void;
+  onUpdateCondition: (questionIndex: number, conditionIndex: number, condition: Condition) => void;
+  onRemoveCondition: (questionIndex: number, conditionIndex: number) => void;
 }
 
 export const QuestionsList = ({
@@ -26,7 +29,10 @@ export const QuestionsList = ({
   onAddQuestion,
   onAddOption,
   onUpdateOption,
-  onRemoveOption
+  onRemoveOption,
+  onAddCondition,
+  onUpdateCondition,
+  onRemoveCondition
 }: QuestionsListProps) => {
   return (
     <div className="space-y-4">
@@ -45,6 +51,9 @@ export const QuestionsList = ({
           onAddOption={() => onAddOption(index)}
           onUpdateOption={(optionIndex, updatedOption) => onUpdateOption(index, optionIndex, updatedOption)}
           onRemoveOption={(optionIndex) => onRemoveOption(index, optionIndex)}
+          onAddCondition={() => onAddCondition(index)}
+          onUpdateCondition={(conditionIndex, condition) => onUpdateCondition(index, conditionIndex, condition)}
+          onRemoveCondition={(conditionIndex) => onRemoveCondition(index, conditionIndex)}
         />
       ))}
       

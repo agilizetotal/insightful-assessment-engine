@@ -1,9 +1,10 @@
+
 import { Question, Condition } from '@/types/quiz';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Trash } from 'lucide-react';
+import { Trash, Plus } from 'lucide-react';
 import { translations } from '@/locales/pt-BR';
 import { defaultCondition } from './defaults';
 
@@ -24,6 +25,10 @@ export const QuestionConditions = ({
   onAddCondition,
   onRemoveCondition
 }: QuestionConditionsProps) => {
+  if (!question.conditions) {
+    question.conditions = [];
+  }
+  
   return (
     <div className="space-y-4 pt-2">
       <div className="text-sm text-gray-500">
@@ -36,6 +41,7 @@ export const QuestionConditions = ({
           variant="outline" 
           onClick={() => onAddCondition(questionIndex)}
         >
+          <Plus className="h-4 w-4 mr-2" />
           {translations.quiz.addCondition}
         </Button>
       )}
