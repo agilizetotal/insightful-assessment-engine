@@ -10,22 +10,30 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Quiz, Question, QuizResponse, UserData, Condition } from '@/types/quiz';
 import { translations } from '@/locales/pt-BR';
+import { Separator } from "@/components/ui/separator";
 
 interface QuizFormProps {
   quiz: Quiz;
   onComplete: (responses: QuizResponse[], userData: UserData) => void;
 }
 
+// Group questions based on conditions
+interface QuestionGroup {
+  title?: string;
+  questions: Question[];
+}
+
 const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(-1); // -1 represents user data form
   const [responses, setResponses] = useState<QuizResponse[]>([]);
   const [activeQuestions, setActiveQuestions] = useState<Question[]>([]);
+  const [questionGroups, setQuestionGroups] = useState<QuestionGroup[]>([]);
   const [userData, setUserData] = useState<UserData>({
     name: '',
     email: '',
     phone: ''
   });
-  
+
   // Function to evaluate if a condition is met
   const evaluateCondition = (condition: Condition): boolean => {
     const response = responses.find(r => r.questionId === condition.questionId);
@@ -65,46 +73,71 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
     }
   };
   
-  // Function to evaluate if a question should be shown based on its conditions
-  const shouldShowQuestion = (question: Question): boolean => {
+  // Function to evaluate conditions based on logical operators
+  const evaluateConditionsWithLogic = (question: Question): boolean => {
     if (!question.conditions || question.conditions.length === 0) {
       return true;
     }
     
     // Group conditions by logical operator
-    let andConditions: boolean[] = [];
-    let orConditions: boolean[] = [];
+    const conditionGroups: Array<Condition[]> = [];
+    let currentGroup: Condition[] = [];
     
     question.conditions.forEach((condition, index) => {
-      const conditionMet = evaluateCondition(condition);
-      
-      if (index === 0 || condition.logical_operator === 'AND') {
-        andConditions.push(conditionMet);
+      if (index === 0) {
+        currentGroup.push(condition);
       } else if (condition.logical_operator === 'OR') {
-        orConditions.push(conditionMet);
+        conditionGroups.push([...currentGroup]);
+        currentGroup = [condition];
+      } else {
+        currentGroup.push(condition);
       }
     });
     
-    // All AND conditions must be met
-    const andResult = andConditions.length === 0 || andConditions.every(c => c);
+    // Add the last group
+    if (currentGroup.length > 0) {
+      conditionGroups.push(currentGroup);
+    }
     
-    // At least one OR condition must be met (if any)
-    const orResult = orConditions.length === 0 || orConditions.some(c => c);
-    
-    return andResult && orResult;
+    // Check if any group's conditions are all met (OR between groups)
+    return conditionGroups.some(group => 
+      // All conditions in a group must be met (AND within group)
+      group.every(condition => evaluateCondition(condition))
+    );
   };
   
   useEffect(() => {
     // Only run this when we've moved past the user data form
     if (currentQuestionIndex >= 0) {
       // Filter questions based on conditional logic
-      const filteredQuestions = quiz.questions.filter(shouldShowQuestion);
+      const filteredQuestions = quiz.questions.filter(evaluateConditionsWithLogic);
       setActiveQuestions(filteredQuestions);
+      
+      // Organize questions into groups
+      const groups: QuestionGroup[] = [];
+      let currentGroup: QuestionGroup = { questions: [] };
+      
+      filteredQuestions.forEach((question) => {
+        // For now, a simple grouping - each question with conditions starts a new group
+        if (question.conditions && question.conditions.length > 0 && currentGroup.questions.length > 0) {
+          groups.push(currentGroup);
+          currentGroup = { questions: [question] };
+        } else {
+          currentGroup.questions.push(question);
+        }
+      });
+      
+      // Add the last group if not empty
+      if (currentGroup.questions.length > 0) {
+        groups.push(currentGroup);
+      }
+      
+      setQuestionGroups(groups);
     }
   }, [quiz.questions, responses, currentQuestionIndex]);
   
   const currentQuestion = currentQuestionIndex >= 0 && activeQuestions.length > 0 ? 
-    activeQuestions[currentQuestionIndex] : null;
+    activeQuestions[currentQuestionIndex < activeQuestions.length ? currentQuestionIndex : 0] : null;
     
   const progress = 
     currentQuestionIndex < 0 ? 0 :
@@ -247,12 +280,26 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
     );
   }
   
+  // Find which group the current question belongs to
+  const currentGroupIndex = questionGroups.findIndex(group =>
+    group.questions.some(q => q.id === currentQuestion.id)
+  );
+  
   return (
     <div className="max-w-2xl mx-auto py-8">
       <div className="mb-6">
         <Progress value={progress} className="h-2" />
-        <div className="text-right text-sm text-gray-500 mt-1">
-          Questão {currentQuestionIndex + 1} de {activeQuestions.length}
+        <div className="flex justify-between text-sm text-gray-500 mt-1">
+          <div>
+            {currentGroupIndex > -1 && (
+              <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs">
+                Grupo {currentGroupIndex + 1}
+              </span>
+            )}
+          </div>
+          <div>
+            Questão {currentQuestionIndex + 1} de {activeQuestions.length}
+          </div>
         </div>
       </div>
       

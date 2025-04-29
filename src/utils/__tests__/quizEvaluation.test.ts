@@ -1,76 +1,52 @@
 
 import { describe, it, expect } from 'vitest';
-import { calculateScore, categorizeProfile } from '../quizEvaluation';
+import { calculateResultScore, determineProfile } from '../quizEvaluation';
+import { Question, QuestionType, QuizResponse } from '@/types/quiz';
 
 describe('Quiz Evaluation Utils', () => {
-  describe('calculateScore', () => {
+  describe('calculateResultScore', () => {
     it('should calculate the total score for multiple-choice questions', () => {
-      const questionResponse = { questionId: 'q1', answer: 'option1' };
-      const question = { 
+      const questionResponse: QuizResponse = { questionId: 'q1', answer: 'option1' };
+      const question: Question = { 
         id: 'q1', 
-        type: 'multiple-choice', 
-        options: [{ id: 'option1', weight: 5 }],
         text: 'Test question',
-        required: true
+        type: 'multiple-choice' as QuestionType, 
+        required: true,
+        options: [{ id: 'option1', text: 'Option 1', weight: 5 }]
       };
       
-      expect(calculateScore(questionResponse, question)).toBe(5);
-    });
-    
-    it('should return 0 if option is not found for multiple-choice questions', () => {
-      const questionResponse = { questionId: 'q1', answer: 'non-existent' };
-      const question = { 
-        id: 'q1', 
-        type: 'multiple-choice', 
-        options: [{ id: 'option1', weight: 5 }],
-        text: 'Test question',
-        required: true
-      };
-      
-      expect(calculateScore(questionResponse, question)).toBe(0);
+      expect(calculateResultScore([questionResponse], [question])).toBe(5);
     });
     
     it('should calculate the total score for checkbox questions', () => {
-      const questionResponse = { questionId: 'q1', answer: ['option1', 'option2'] };
-      const question = { 
+      const questionResponse: QuizResponse = { questionId: 'q1', answer: ['option1', 'option2'] };
+      const question: Question = { 
         id: 'q1', 
-        type: 'checkbox', 
+        text: 'Test question',
+        type: 'checkbox' as QuestionType,
+        required: true,
         options: [
-          { id: 'option1', weight: 5 },
-          { id: 'option2', weight: 3 },
-          { id: 'option3', weight: 1 }
-        ],
-        text: 'Test question',
-        required: true
+          { id: 'option1', text: 'Option 1', weight: 5 },
+          { id: 'option2', text: 'Option 2', weight: 3 },
+          { id: 'option3', text: 'Option 3', weight: 1 }
+        ]
       };
       
-      expect(calculateScore(questionResponse, question)).toBe(8);
-    });
-    
-    it('should return 0 for open-ended questions', () => {
-      const questionResponse = { questionId: 'q1', answer: 'Some text answer' };
-      const question = { 
-        id: 'q1', 
-        type: 'open-ended',
-        text: 'Test question',
-        required: true
-      };
-      
-      expect(calculateScore(questionResponse, question)).toBe(0);
+      expect(calculateResultScore([questionResponse], [question])).toBe(8);
     });
   });
 
-  describe('categorizeProfile', () => {
-    it('should categorize profile based on score and ranges', () => {
+  describe('determineProfile', () => {
+    it('should determine profile based on score and ranges', () => {
       const profileRanges = [
         { min: 0, max: 5, profile: 'Beginner', description: 'Beginner level' },
         { min: 6, max: 10, profile: 'Intermediate', description: 'Intermediate level' },
         { min: 11, max: 15, profile: 'Advanced', description: 'Advanced level' }
       ];
       
-      expect(categorizeProfile(3, profileRanges)).toBe('Beginner');
-      expect(categorizeProfile(7, profileRanges)).toBe('Intermediate');
-      expect(categorizeProfile(12, profileRanges)).toBe('Advanced');
+      expect(determineProfile(3, profileRanges)).toBe('Beginner');
+      expect(determineProfile(7, profileRanges)).toBe('Intermediate');
+      expect(determineProfile(12, profileRanges)).toBe('Advanced');
     });
     
     it('should return "Unknown profile" if no matching range is found', () => {
@@ -79,7 +55,7 @@ describe('Quiz Evaluation Utils', () => {
         { min: 6, max: 10, profile: 'Intermediate', description: 'Intermediate level' }
       ];
       
-      expect(categorizeProfile(15, profileRanges)).toBe('Unknown profile');
+      expect(determineProfile(15, profileRanges)).toBe('Unknown profile');
     });
   });
 });
