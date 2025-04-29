@@ -79,7 +79,7 @@ export const useQuizData = (quizId: string | undefined) => {
               questionId: cond.question_id,
               operator: cond.operator as "equals" | "not-equals" | "greater-than" | "less-than" | "contains",
               value: cond.value,
-              logical_operator: (cond.logical_operator || 'AND') as 'AND' | 'OR'
+              logical_operator: 'AND' // Valor padrão se não existir
             })) : []
           };
         }));

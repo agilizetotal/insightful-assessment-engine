@@ -38,12 +38,14 @@ const Index = () => {
             link="/admin/create"
           />
           
-          <FeatureCard 
-            title={translations.index.takeAssessment}
-            description={translations.index.takeAssessmentDescription}
-            icon={<User className="h-10 w-10 text-quiz-accent" />}
-            link="/quiz/demo"
-          />
+          {!user && (
+            <FeatureCard 
+              title={translations.index.takeAssessment}
+              description={translations.index.takeAssessmentDescription}
+              icon={<User className="h-10 w-10 text-quiz-accent" />}
+              link="/quiz/demo"
+            />
+          )}
           
           <FeatureCard 
             title={translations.index.viewAnalytics}
@@ -57,7 +59,7 @@ const Index = () => {
             description={translations.index.adminPanelDescription}
             icon={<Home className="h-10 w-10 text-quiz-accent" />}
             link="/admin"
-            className="md:col-span-2 lg:col-span-1"
+            className={`md:col-span-2 lg:col-span-${user ? 2 : 1}`}
           />
           
           <FeatureCard 
@@ -73,11 +75,13 @@ const Index = () => {
           <h2 className="text-2xl font-bold mb-4">{translations.index.getStarted}</h2>
           <div className="flex justify-center gap-4">
             <Button asChild className="bg-quiz-primary hover:bg-quiz-secondary">
-              <Link to="/quiz/demo">{translations.index.tryDemo}</Link>
+              <Link to="/admin/create-new">{translations.index.createQuiz}</Link>
             </Button>
-            <Button asChild variant="outline" className="border-quiz-primary text-quiz-primary hover:bg-quiz-light">
-              <Link to="/admin/create">{translations.index.createQuiz}</Link>
-            </Button>
+            {!user && (
+              <Button asChild variant="outline" className="border-quiz-primary text-quiz-primary hover:bg-quiz-light">
+                <Link to="/quiz/demo">{translations.index.tryDemo}</Link>
+              </Button>
+            )}
           </div>
         </div>
       </div>

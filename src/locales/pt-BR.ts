@@ -1,3 +1,4 @@
+
 export const translations = {
   index: {
     title: "Sistema de Questionários Interativos",
@@ -22,6 +23,7 @@ export const translations = {
     question: "Pergunta",
     questions: "Perguntas",
     options: "Opções",
+    option: "Opção",
     profiles: "Perfis",
     createNew: "Criar Novo",
     createNewTitle: "Criar Novo Questionário",
@@ -42,10 +44,15 @@ export const translations = {
     confirmDeleteOption: "Tem certeza que deseja excluir esta opção?",
     confirmDeleteProfile: "Tem certeza que deseja excluir este perfil?",
     questionType: "Tipo de pergunta",
+    questionText: "Texto da pergunta",
+    questionPlaceholder: "Digite a pergunta aqui",
+    selectQuestionType: "Selecione o tipo de pergunta",
     multipleChoice: "Múltipla escolha",
     checkbox: "Caixas de seleção",
+    checkboxes: "Caixas de seleção",
     openEnded: "Resposta aberta",
     required: "Obrigatória",
+    requiredQuestion: "Pergunta obrigatória",
     weight: "Peso",
     minScore: "Pontuação mínima",
     maxScore: "Pontuação máxima",
@@ -72,7 +79,6 @@ export const translations = {
     nextQuestion: "Próxima pergunta",
     previousQuestion: "Pergunta anterior",
     progress: "Progresso",
-    required: "Obrigatório",
     selectOption: "Selecione uma opção",
     selectOptions: "Selecione uma ou mais opções",
     openEndedPlaceholder: "Digite sua resposta aqui...",
@@ -93,6 +99,7 @@ export const translations = {
     addProfileRange: "Adicionar Faixa de Perfil",
     profileRangeExplanation: "As faixas de perfil determinam qual perfil será atribuído com base na pontuação total.",
     conditionalDescription: "Configure quando esta pergunta deve ser exibida",
+    conditionalLogic: "Lógica condicional",
     addCondition: "Adicionar Condição",
     condition: "Condição",
     selectOperator: "Selecionar Operador",
@@ -106,7 +113,10 @@ export const translations = {
     lessThan: "Menor que",
     enterValue: "Digite o valor",
     selectValue: "Selecione o valor",
-    copyButton: "Copiar"
+    copyButton: "Copiar",
+    responsesSaved: "Respostas salvas com sucesso!",
+    savingError: "Erro ao salvar respostas",
+    unknownProfile: "Perfil desconhecido"
   },
   dashboard: {
     title: "Painel Administrativo",
@@ -145,7 +155,8 @@ export const translations = {
     title: "Código de Incorporação",
     description: "Use o código abaixo para incorporar este questionário em seu site:",
     copySuccess: "Código copiado para a área de transferência!",
-    copyError: "Erro ao copiar o código. Por favor, tente novamente."
+    copyError: "Erro ao copiar o código. Por favor, tente novamente.",
+    copyButton: "Copiar código"
   },
   auth: {
     login: "Entrar",
@@ -159,7 +170,8 @@ export const translations = {
     loginError: "Erro ao fazer login",
     signupSuccess: "Cadastro realizado com sucesso",
     signupError: "Erro ao fazer cadastro",
-    logoutSuccess: "Logout realizado com sucesso"
+    logoutSuccess: "Logout realizado com sucesso",
+    loginRequired: "Login necessário para continuar"
   },
   error: {
     errorOccurred: "Ocorreu um erro",

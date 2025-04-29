@@ -4,6 +4,7 @@ import { Quiz, QuizResponse, QuizResult } from '@/types/quiz';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { translations } from '@/locales/pt-BR';
 
 export const useQuizResponse = (quiz: Quiz) => {
   const [responses, setResponses] = useState<QuizResponse[]>([]);
@@ -43,7 +44,7 @@ export const useQuizResponse = (quiz: Quiz) => {
       quizId: quiz.id,
       responses: quizResponses,
       score: totalScore,
-      profile: profileRange?.profile || 'Unknown',
+      profile: profileRange?.profile || translations.quiz.unknownProfile,
       completedAt: new Date().toISOString(),
       isPremium: false
     };
@@ -55,7 +56,7 @@ export const useQuizResponse = (quiz: Quiz) => {
           quiz_id: quiz.id,
           user_id: user?.id,
           score: totalScore,
-          profile: profileRange?.profile || 'Unknown',
+          profile: profileRange?.profile || translations.quiz.unknownProfile,
           is_premium: false
         })
         .select('id')
@@ -75,10 +76,10 @@ export const useQuizResponse = (quiz: Quiz) => {
 
       if (answersError) throw answersError;
 
-      toast.success(translations.quiz.saveSuccess);
+      toast.success(translations.quiz.responsesSaved);
     } catch (error) {
       console.error("Error saving responses:", error);
-      toast.error(translations.quiz.saveError);
+      toast.error(translations.quiz.savingError);
     }
     
     setQuizResult(result);

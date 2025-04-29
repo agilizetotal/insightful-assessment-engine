@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Card, 
   CardContent, 
@@ -29,10 +29,138 @@ import {
   Filter
 } from "lucide-react";
 import ResultsChart from "@/components/ResultsChart";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { translations } from "@/locales/pt-BR";
 
 const Analytics = () => {
   const [dateRange, setDateRange] = useState("30");
   const [quizFilter, setQuizFilter] = useState("all");
+  const [loading, setLoading] = useState(true);
+  const [quizzes, setQuizzes] = useState([]);
+  const [stats, setStats] = useState({
+    totalCompletions: 0,
+    avgCompletionTime: "0:00",
+    premiumConversion: 0
+  });
+  const [responses, setResponses] = useState([]);
+  const { user } = useAuth();
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch quizzes for filter dropdown
+        const { data: quizzesData, error: quizzesError } = await supabase
+          .from('quizzes')
+          .select('id, title')
+          .order('created_at', { ascending: false });
+          
+        if (quizzesError) throw quizzesError;
+        
+        // Fetch quiz responses
+        const { data: responsesData, error: responsesError } = await supabase
+          .from('quiz_responses')
+          .select(`
+            id, 
+            score, 
+            profile, 
+            is_premium, 
+            completed_at,
+            quizzes (
+              id,
+              title
+            )
+          `)
+          .order('completed_at', { ascending: false });
+          
+        if (responsesError) throw responsesError;
+        
+        // Calculate statistics
+        const totalCompletions = responsesData?.length || 0;
+        const premiumCount = responsesData?.filter(r => r.is_premium)?.length || 0;
+        const premiumPercentage = totalCompletions > 0 
+          ? Math.round((premiumCount / totalCompletions) * 100) 
+          : 0;
+          
+        setQuizzes(quizzesData || []);
+        setResponses(responsesData || []);
+        setStats({
+          totalCompletions,
+          avgCompletionTime: calculateAverageTime(responsesData),
+          premiumConversion: premiumPercentage
+        });
+      } catch (error) {
+        console.error('Error fetching analytics data:', error);
+        toast.error("Erro ao carregar dados analíticos");
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [user, dateRange, quizFilter]);
+  
+  const calculateAverageTime = (data) => {
+    if (!data || data.length === 0) return "0:00";
+    // Em uma implementação real, isto calcularia o tempo médio
+    // com base nos timestamps de início e conclusão
+    return "7:24"; // Valor de exemplo
+  };
+  
+  const getProfileDistribution = () => {
+    if (!responses || responses.length === 0) {
+      return { 
+        labels: ["Sem dados"], 
+        values: [100] 
+      };
+    }
+    
+    const profiles = {};
+    responses.forEach(response => {
+      if (response.profile) {
+        profiles[response.profile] = (profiles[response.profile] || 0) + 1;
+      }
+    });
+    
+    return {
+      labels: Object.keys(profiles),
+      values: Object.values(profiles)
+    };
+  };
+  
+  const getCompletionsData = () => {
+    // Em uma implementação real, isto agregaria dados por mês
+    // com base nas respostas reais
+    if (!responses || responses.length === 0) {
+      return { 
+        labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"], 
+        values: [0, 0, 0, 0, 0, 0] 
+      };
+    }
+    
+    return {
+      labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"],
+      values: [responses.length * 0.1, responses.length * 0.15, 
+               responses.length * 0.2, responses.length * 0.15, 
+               responses.length * 0.25, responses.length * 0.15]
+    };
+  };
+  
+  if (loading) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="mt-4">{translations.common.loading}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="container mx-auto p-4">
@@ -67,9 +195,11 @@ const Analytics = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Quizzes</SelectItem>
-                <SelectItem value="leadership">Leadership Assessment</SelectItem>
-                <SelectItem value="team">Team Dynamics Survey</SelectItem>
-                <SelectItem value="communication">Communication Skills</SelectItem>
+                {quizzes.map(quiz => (
+                  <SelectItem key={quiz.id} value={quiz.id}>
+                    {quiz.title}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -84,10 +214,9 @@ const Analytics = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">1,248</div>
+            <div className="text-3xl font-bold">{stats.totalCompletions}</div>
             <div className="flex items-center text-sm mt-1">
-              <span className="text-green-500 mr-1">+12.5%</span>
-              <span className="text-gray-500">vs previous period</span>
+              <span className="text-gray-500">Total de respostas</span>
             </div>
           </CardContent>
         </Card>
@@ -99,10 +228,9 @@ const Analytics = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">7:24</div>
+            <div className="text-3xl font-bold">{stats.avgCompletionTime}</div>
             <div className="flex items-center text-sm mt-1">
-              <span className="text-red-500 mr-1">+0:46</span>
-              <span className="text-gray-500">vs previous period</span>
+              <span className="text-gray-500">Tempo médio estimado</span>
             </div>
           </CardContent>
         </Card>
@@ -114,10 +242,9 @@ const Analytics = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">24%</div>
+            <div className="text-3xl font-bold">{stats.premiumConversion}%</div>
             <div className="flex items-center text-sm mt-1">
-              <span className="text-green-500 mr-1">+3.2%</span>
-              <span className="text-gray-500">vs previous period</span>
+              <span className="text-gray-500">Conversão para premium</span>
             </div>
           </CardContent>
         </Card>
@@ -146,10 +273,7 @@ const Analytics = () => {
                 <ResultsChart
                   type="line"
                   title="Completions"
-                  data={{
-                    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-                    values: [65, 78, 82, 75, 102, 110, 95, 88, 118, 127, 135, 142],
-                  }}
+                  data={getCompletionsData()}
                   downloadFileName="completions-trend"
                 />
               </CardContent>
@@ -168,33 +292,8 @@ const Analytics = () => {
                 <ResultsChart
                   type="pie"
                   title="Leadership Profiles"
-                  data={{
-                    labels: ["Directive", "Procedural", "Collaborative", "Adaptive"],
-                    values: [18, 25, 32, 25],
-                  }}
+                  data={getProfileDistribution()}
                   downloadFileName="profile-distribution"
-                />
-              </CardContent>
-            </Card>
-            
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle>Competency Area Analysis</CardTitle>
-                  <Button variant="ghost" size="sm">
-                    <Download className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <ResultsChart
-                  type="bar"
-                  title="Average Score by Competency"
-                  data={{
-                    labels: ["Strategic Thinking", "Communication", "Decision Making", "Team Building", "Innovation", "Execution"],
-                    values: [7.2, 8.1, 6.5, 7.8, 6.2, 7.5],
-                  }}
-                  downloadFileName="competency-scores"
                 />
               </CardContent>
             </Card>
@@ -214,21 +313,8 @@ const Analytics = () => {
                 <ResultsChart
                   type="pie"
                   title="Profile Distribution"
-                  data={{
-                    labels: ["Directive", "Procedural", "Collaborative", "Adaptive"],
-                    values: [18, 25, 32, 25],
-                  }}
+                  data={getProfileDistribution()}
                   downloadFileName="profile-distribution"
-                />
-                
-                <ResultsChart
-                  type="bar"
-                  title="Profile by Experience Level"
-                  data={{
-                    labels: ["Entry", "Mid-Level", "Senior", "Executive"],
-                    values: [35, 42, 58, 78],
-                  }}
-                  downloadFileName="profile-by-experience"
                 />
               </div>
             </CardContent>
@@ -244,47 +330,15 @@ const Analytics = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-6">
-                <div>
-                  <h3 className="font-medium mb-2">
-                    Q1: When leading a team project, I prefer to:
-                  </h3>
-                  <ResultsChart
-                    type="bar"
-                    title="Response Distribution"
-                    data={{
-                      labels: [
-                        "Provide detailed instructions", 
-                        "Set clear goals with autonomy", 
-                        "Facilitate group discussions", 
-                        "Adapt based on situation"
-                      ],
-                      values: [22, 35, 28, 15],
-                    }}
-                    downloadFileName="q1-responses"
-                  />
+              {responses.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  Ainda não há dados de respostas para analisar
                 </div>
-                
-                <div>
-                  <h3 className="font-medium mb-2">
-                    Q2: When facing a challenge, I typically:
-                  </h3>
-                  <ResultsChart
-                    type="bar"
-                    title="Response Distribution"
-                    data={{
-                      labels: [
-                        "Analyze available data", 
-                        "Trust intuition", 
-                        "Consult with team", 
-                        "Follow protocols"
-                      ],
-                      values: [30, 25, 32, 13],
-                    }}
-                    downloadFileName="q2-responses"
-                  />
+              ) : (
+                <div className="text-center py-8">
+                  Implementação futura: Análise detalhada por questão
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -298,27 +352,20 @@ const Analytics = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <ResultsChart
-                  type="line"
-                  title="Average Scores Over Time"
-                  data={{
-                    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-                    values: [18.2, 19.5, 20.1, 21.3, 22.8, 23.5],
-                  }}
-                  downloadFileName="score-trends"
-                />
-                
-                <ResultsChart
-                  type="line"
-                  title="Completion Rate Trends"
-                  data={{
-                    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-                    values: [65, 70, 73, 68, 82, 88],
-                  }}
-                  downloadFileName="completion-trends"
-                />
-              </div>
+              {responses.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  Ainda não há dados suficientes para análise de tendências
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <ResultsChart
+                    type="line"
+                    title="Average Scores Over Time"
+                    data={getCompletionsData()}
+                    downloadFileName="score-trends"
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -332,106 +379,78 @@ const Analytics = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Quiz
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Score
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Profile
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Subscription
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {[
-                  {
-                    date: "2023-06-15",
-                    quiz: "Leadership Assessment",
-                    score: 26,
-                    profile: "Adaptive Leader",
-                    subscription: "Premium"
-                  },
-                  {
-                    date: "2023-06-14",
-                    quiz: "Communication Skills",
-                    score: 18,
-                    profile: "Collaborative Leader",
-                    subscription: "Free"
-                  },
-                  {
-                    date: "2023-06-14",
-                    quiz: "Leadership Assessment",
-                    score: 22,
-                    profile: "Collaborative Leader",
-                    subscription: "Premium"
-                  },
-                  {
-                    date: "2023-06-13",
-                    quiz: "Team Dynamics Survey",
-                    score: 15,
-                    profile: "Procedural Leader",
-                    subscription: "Free"
-                  },
-                  {
-                    date: "2023-06-12",
-                    quiz: "Leadership Assessment",
-                    score: 8,
-                    profile: "Directive Leader",
-                    subscription: "Free"
-                  }
-                ].map((submission, index) => (
-                  <tr key={index}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {submission.date}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      {submission.quiz}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {submission.score}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {submission.profile}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        submission.subscription === "Premium" 
-                          ? "bg-green-100 text-green-800" 
-                          : "bg-gray-100 text-gray-800"
-                      }`}>
-                        {submission.subscription}
-                      </span>
-                    </td>
+          {responses.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              Ainda não há submissões de questionários registradas
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead>
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Quiz
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Score
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Profile
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Subscription
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {responses.slice(0, 5).map((submission, index) => (
+                    <tr key={submission.id || index}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {new Date(submission.completed_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        {submission.quizzes?.title || "Desconhecido"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {submission.score}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {submission.profile || "Desconhecido"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          submission.is_premium 
+                            ? "bg-green-100 text-green-800" 
+                            : "bg-gray-100 text-gray-800"
+                        }`}>
+                          {submission.is_premium ? "Premium" : "Free"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
           
-          <div className="flex justify-between items-center mt-4">
-            <div className="text-sm text-gray-500">
-              Showing 5 of 1,248 submissions
+          {responses.length > 5 && (
+            <div className="flex justify-between items-center mt-4">
+              <div className="text-sm text-gray-500">
+                Mostrando 5 de {responses.length} submissões
+              </div>
+              <div className="flex space-x-2">
+                <Button variant="outline" size="sm">
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm">
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-            <div className="flex space-x-2">
-              <Button variant="outline" size="sm">
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="sm">
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
     </div>

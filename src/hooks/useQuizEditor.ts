@@ -30,6 +30,10 @@ export const useQuizEditor = (
       onSave(updatedQuiz);
     }
   };
+  
+  const handlePreview = () => {
+    onPreview(quiz);
+  };
 
   return {
     quiz,
@@ -44,6 +48,7 @@ export const useQuizEditor = (
     addOption,
     updateOption,
     removeOption,
-    handleSave
+    handleSave,
+    handlePreview
   };
 };

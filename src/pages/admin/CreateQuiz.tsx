@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Quiz } from '@/types/quiz';
 import QuizEditor from '@/components/QuizEditor';
@@ -10,7 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 const CreateQuiz: React.FC = () => {
   const { user } = useAuth();
   const [previewMode, setPreviewMode] = useState<'edit' | 'take' | 'results'>('edit');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [quiz, setQuiz] = useState<Quiz>({
     id: crypto.randomUUID(),
     title: 'Avaliação de Liderança',
@@ -105,7 +106,6 @@ const CreateQuiz: React.FC = () => {
           quizResult={quizResult}
           onBackToEdit={() => {
             setPreviewMode('edit');
-            setQuizResult(null);
           }}
           onComplete={(responses) => {
             handleQuizComplete(responses);
