@@ -11,12 +11,12 @@ interface ResultsChartProps {
     values: number[];
     colors?: string[];
   };
-  type: 'bar' | 'pie' | 'radar' | 'line';
+  type: 'bar' | 'pie' | 'radar' | 'line' | 'doughnut';
   title: string;
   downloadFileName?: string;
 }
 
-const ResultsChart: React.FC<ResultsChartProps> = ({
+export const ResultsChart: React.FC<ResultsChartProps> = ({
   data,
   type,
   title,
@@ -72,8 +72,9 @@ const ResultsChart: React.FC<ResultsChartProps> = ({
             break;
             
           case 'pie':
+          case 'doughnut':
             chartConfig = {
-              type: 'pie',
+              type: type, // Use the exact type (pie or doughnut)
               data: {
                 labels: data.labels,
                 datasets: [{
@@ -194,4 +195,5 @@ const ResultsChart: React.FC<ResultsChartProps> = ({
   );
 };
 
+// Add a default export that points to the same component
 export default ResultsChart;
