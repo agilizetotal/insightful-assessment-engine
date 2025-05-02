@@ -6,7 +6,6 @@ import { Quiz } from '@/types/quiz';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { translations } from '@/locales/pt-BR';
 
 const CreateNewQuiz: React.FC = () => {
   const navigate = useNavigate();
@@ -16,8 +15,8 @@ const CreateNewQuiz: React.FC = () => {
   // Create a completely new empty quiz template
   const emptyQuiz: Quiz = {
     id: crypto.randomUUID(),
-    title: translations.quiz.defaultTitle,
-    description: translations.quiz.defaultDescription,
+    title: 'Novo Questionário',
+    description: 'Descreva o propósito deste questionário',
     questions: [],
     profileRanges: [],
     createdAt: new Date().toISOString(),
@@ -26,7 +25,7 @@ const CreateNewQuiz: React.FC = () => {
   
   const handleSaveQuiz = async (savedQuiz: Quiz) => {
     if (user) {
-      toast.success(translations.quiz.saveSuccess);
+      toast.success("Questionário salvo com sucesso!");
       navigate(`/admin/edit/${savedQuiz.id}`);
     }
   };
@@ -34,7 +33,7 @@ const CreateNewQuiz: React.FC = () => {
   const handlePreviewQuiz = (previewQuiz: Quiz) => {
     // Since this is a completely new quiz, we'll save it first and then navigate
     if (previewQuiz.questions.length === 0) {
-      toast.error(translations.quiz.noQuestionsError);
+      toast.error("Adicione pelo menos uma questão para visualizar");
       return;
     }
     
@@ -46,7 +45,7 @@ const CreateNewQuiz: React.FC = () => {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4">{translations.common.loading}</p>
+          <p className="mt-4">Carregando...</p>
         </div>
       </div>
     );
@@ -54,7 +53,7 @@ const CreateNewQuiz: React.FC = () => {
   
   return (
     <div className="container mx-auto p-4 pt-16">
-      <h1 className="text-2xl font-bold mb-6">{translations.quiz.createNewTitle}</h1>
+      <h1 className="text-2xl font-bold mb-6">Criar Novo Questionário</h1>
       <QuizEditor 
         initialQuiz={emptyQuiz} 
         onSave={handleSaveQuiz} 

@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import QuizForm from '@/components/QuizForm';
 import ResultsSummary from '@/components/ResultsSummary';
-import { translations } from '@/locales/pt-BR';
 import { toast } from 'sonner';
 
 interface QuizPreviewProps {
@@ -32,10 +31,10 @@ export const QuizPreview = ({
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          {translations.common.back}
+          Voltar
         </Button>
         <div className="text-center">
-          <p>Quiz data not available. Please try again.</p>
+          <p>Dados do questionário não disponíveis. Por favor, tente novamente.</p>
         </div>
       </div>
     );
@@ -49,13 +48,13 @@ export const QuizPreview = ({
         className="mb-4"
       >
         <ArrowLeft className="h-4 w-4 mr-2" />
-        {translations.common.back}
+        Voltar
       </Button>
       
       {previewMode === 'take' && (
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold mb-2">{quiz?.title || 'Untitled Quiz'}</h1>
+            <h1 className="text-2xl font-bold mb-2">{quiz?.title || 'Questionário sem título'}</h1>
             <p className="text-gray-600">{quiz?.description || ''}</p>
           </div>
           <QuizForm quiz={quiz} onComplete={onComplete} />
@@ -66,9 +65,9 @@ export const QuizPreview = ({
         <ResultsSummary 
           quiz={quiz} 
           result={quizResult} 
-          onSendEmail={() => toast.info(translations.quiz.emailFunctionInfo)} 
+          onSendEmail={() => toast.info("Funcionalidade de envio de e-mail disponível na versão premium")} 
           onUpgrade={() => {
-            toast.info(translations.quiz.upgradingInfo);
+            toast.info("Atualizando para o relatório premium...");
           }} 
         />
       )}

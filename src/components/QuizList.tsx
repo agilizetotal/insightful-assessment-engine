@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { 
@@ -113,12 +114,12 @@ export function QuizList() {
     <Card className="overflow-hidden">
       <div className="p-4 bg-white">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
-          <h3 className="text-lg font-medium">{translations.dashboard?.yourQuizzes || 'Seus Questionários'}</h3>
+          <h3 className="text-lg font-medium">Seus Questionários</h3>
           <div className="relative mt-2 md:mt-0">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
             <Input
               type="search"
-              placeholder={translations.dashboard?.searchQuizzes || 'Buscar questionários'}
+              placeholder="Buscar questionários"
               className="pl-8 w-full md:w-[250px]"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -131,9 +132,9 @@ export function QuizList() {
             <TableCaption>Lista dos seus questionários e estatísticas</TableCaption>
             <TableHeader>
               <TableRow>
-                <TableHead>{translations.quiz.title}</TableHead>
+                <TableHead>Título</TableHead>
                 <TableHead>Data de criação</TableHead>
-                <TableHead>{translations.dashboard?.totalResponses || 'Total de respostas'}</TableHead>
+                <TableHead>Total de respostas</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>

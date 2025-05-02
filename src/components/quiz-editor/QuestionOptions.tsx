@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Plus, Trash } from 'lucide-react';
-import { translations } from '@/locales/pt-BR';
 
 interface QuestionOptionsProps {
   options?: Option[];
@@ -22,14 +21,14 @@ export const QuestionOptions = ({
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <Label>{translations.quiz.options}</Label>
+        <Label>Opções</Label>
         <Button 
           size="sm" 
           variant="outline" 
           onClick={onAddOption}
         >
           <Plus className="h-4 w-4 mr-1" />
-          {translations.quiz.addOption}
+          Adicionar Opção
         </Button>
       </div>
       
@@ -42,7 +41,7 @@ export const QuestionOptions = ({
                 ...option, 
                 text: e.target.value
               })}
-              placeholder={`${translations.quiz.option} ${optionIndex + 1}`}
+              placeholder={`Opção ${optionIndex + 1}`}
             />
           </div>
           <div className="w-24">
@@ -53,7 +52,7 @@ export const QuestionOptions = ({
                 ...option, 
                 weight: parseInt(e.target.value) || 0
               })}
-              placeholder={translations.quiz.weight}
+              placeholder="Peso"
             />
           </div>
           <Button 

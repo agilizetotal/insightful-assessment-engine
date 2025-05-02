@@ -1,3 +1,4 @@
+
 import { Quiz, ProfileRange } from '@/types/quiz';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Trash, Plus } from 'lucide-react';
-import { translations } from '@/locales/pt-BR';
 import { defaultProfileRange } from './defaults';
 
 interface ProfileRangesProps {
@@ -23,7 +23,7 @@ export const ProfileRanges = ({ quiz, onUpdate }: ProfileRangesProps) => {
       max: quiz.profileRanges.length > 0 
         ? quiz.profileRanges[quiz.profileRanges.length - 1].max + 10 
         : 10,
-      profile: `Profile ${quiz.profileRanges.length + 1}`
+      profile: `Perfil ${quiz.profileRanges.length + 1}`
     }];
     
     onUpdate({
@@ -54,14 +54,14 @@ export const ProfileRanges = ({ quiz, onUpdate }: ProfileRangesProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{translations.quiz.profileDefinitions}</CardTitle>
-        <CardDescription>{translations.quiz.profileDefinitionsDescription}</CardDescription>
+        <CardTitle>Definição de Perfis</CardTitle>
+        <CardDescription>Configure os perfis e suas faixas de pontuação</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {quiz.profileRanges.map((range, index) => (
           <div key={index} className="p-4 border rounded-md space-y-3">
             <div className="flex justify-between items-center">
-              <h3 className="font-medium">{translations.quiz.profile} {index + 1}</h3>
+              <h3 className="font-medium">Perfil {index + 1}</h3>
               <Button 
                 size="sm" 
                 variant="ghost" 
@@ -74,7 +74,7 @@ export const ProfileRanges = ({ quiz, onUpdate }: ProfileRangesProps) => {
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor={`min-${index}`}>{translations.quiz.minScore}</Label>
+                <Label htmlFor={`min-${index}`}>Pontuação Mínima</Label>
                 <Input 
                   id={`min-${index}`} 
                   type="number" 
@@ -87,7 +87,7 @@ export const ProfileRanges = ({ quiz, onUpdate }: ProfileRangesProps) => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor={`max-${index}`}>{translations.quiz.maxScore}</Label>
+                <Label htmlFor={`max-${index}`}>Pontuação Máxima</Label>
                 <Input 
                   id={`max-${index}`} 
                   type="number" 
@@ -101,7 +101,7 @@ export const ProfileRanges = ({ quiz, onUpdate }: ProfileRangesProps) => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor={`profile-${index}`}>{translations.quiz.profileName}</Label>
+              <Label htmlFor={`profile-${index}`}>Nome do Perfil</Label>
               <Input 
                 id={`profile-${index}`} 
                 value={range.profile} 
@@ -109,12 +109,12 @@ export const ProfileRanges = ({ quiz, onUpdate }: ProfileRangesProps) => {
                   ...range, 
                   profile: e.target.value
                 })}
-                placeholder={translations.quiz.profileNamePlaceholder}
+                placeholder="Nome do perfil"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor={`description-${index}`}>{translations.quiz.profileDescription}</Label>
+              <Label htmlFor={`description-${index}`}>Descrição do Perfil</Label>
               <Textarea 
                 id={`description-${index}`} 
                 value={range.description} 
@@ -122,7 +122,7 @@ export const ProfileRanges = ({ quiz, onUpdate }: ProfileRangesProps) => {
                   ...range, 
                   description: e.target.value
                 })}
-                placeholder={translations.quiz.profileDescriptionPlaceholder}
+                placeholder="Descreva as características deste perfil"
                 rows={3}
               />
             </div>
@@ -131,11 +131,11 @@ export const ProfileRanges = ({ quiz, onUpdate }: ProfileRangesProps) => {
         
         <Button onClick={addProfileRange} variant="outline" className="w-full">
           <Plus className="h-4 w-4 mr-2" />
-          {translations.quiz.addProfileRange}
+          Adicionar Faixa de Perfil
         </Button>
       </CardContent>
       <CardFooter className="bg-gray-50 text-sm text-gray-500">
-        <p>{translations.quiz.profileRangeExplanation}</p>
+        <p>As faixas de pontuação determinam qual perfil será atribuído com base na pontuação final.</p>
       </CardFooter>
     </Card>
   );

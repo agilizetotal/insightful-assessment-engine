@@ -42,7 +42,7 @@ export function EmbedCodeGenerator({ quizId }: EmbedCodeGeneratorProps) {
   const handleCopy = () => {
     navigator.clipboard.writeText(embedCode);
     setCopied(true);
-    toast.success(translations.embed.copySuccess);
+    toast.success("Código copiado com sucesso!");
     
     setTimeout(() => {
       setCopied(false);
@@ -52,7 +52,7 @@ export function EmbedCodeGenerator({ quizId }: EmbedCodeGeneratorProps) {
   return (
     <Card className="mt-6">
       <CardHeader>
-        <CardTitle>{translations.embed.description}</CardTitle>
+        <CardTitle>Código de incorporação</CardTitle>
       </CardHeader>
       <CardContent>
         <Textarea 
@@ -68,12 +68,12 @@ export function EmbedCodeGenerator({ quizId }: EmbedCodeGeneratorProps) {
           {copied ? (
             <>
               <Check className="h-4 w-4 mr-2" />
-              {translations.embed.copyButton}
+              Copiado!
             </>
           ) : (
             <>
               <Copy className="h-4 w-4 mr-2" />
-              {translations.embed.copyButton}
+              Copiar código
             </>
           )}
         </Button>
