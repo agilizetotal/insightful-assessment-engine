@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { translations } from '@/locales/pt-BR';
 
 interface GeneralSettingsProps {
   quiz: Quiz;
@@ -22,7 +23,7 @@ export const GeneralSettings = ({ quiz, onUpdate }: GeneralSettingsProps) => {
           <Label htmlFor="title">Título</Label>
           <Input 
             id="title" 
-            value={quiz.title} 
+            value={quiz?.title || ''} 
             onChange={(e) => onUpdate({...quiz, title: e.target.value})}
             placeholder="Digite o título do questionário"
           />
@@ -32,7 +33,7 @@ export const GeneralSettings = ({ quiz, onUpdate }: GeneralSettingsProps) => {
           <Label htmlFor="description">Descrição</Label>
           <Textarea 
             id="description" 
-            value={quiz.description} 
+            value={quiz?.description || ''} 
             onChange={(e) => onUpdate({...quiz, description: e.target.value})}
             placeholder="Descreva o objetivo do questionário"
             rows={4}

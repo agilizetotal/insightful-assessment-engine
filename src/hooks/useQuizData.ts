@@ -79,7 +79,8 @@ export const useQuizData = (quizId: string | undefined) => {
               questionId: cond.question_id,
               operator: cond.operator as "equals" | "not-equals" | "greater-than" | "less-than" | "contains",
               value: cond.value,
-              logical_operator: cond.logical_operator as "AND" | "OR" || 'AND'
+              // Fix here: Using defaulted logical_operator since it might be missing in some database records
+              logical_operator: 'AND' as "AND" | "OR"
             })) : []
           };
         }));

@@ -1,3 +1,4 @@
+
 export const translations = {
   common: {
     appName: 'Quiz Flow',
@@ -121,5 +122,33 @@ export const translations = {
     latestResponses: 'Últimas respostas',
     overview: 'Visão geral',
     responses: 'Respostas'
+  },
+  // Adding missing index section
+  index: {
+    title: 'Quiz Flow - Crie questionários personalizados',
+    subtitle: 'Crie, compartilhe e analise questionários personalizados para diferentes propósitos',
+    createQuizzes: 'Criar Questionários',
+    createQuizzesDescription: 'Crie questionários personalizados com diversos tipos de perguntas',
+    takeAssessment: 'Responder Questionário',
+    takeAssessmentDescription: 'Responda questionários e receba resultados personalizados',
+    viewAnalytics: 'Ver Análises',
+    viewAnalyticsDescription: 'Analise as respostas dos seus questionários com gráficos e estatísticas',
+    adminPanel: 'Painel de Administração',
+    adminPanelDescription: 'Gerencie todos os seus questionários em um só lugar',
+    settings: 'Configurações',
+    settingsDescription: 'Personalize as configurações do seu perfil e da aplicação',
+    getStarted: 'Comece Agora',
+    createQuiz: 'Criar Questionário',
+    tryDemo: 'Experimentar Demo'
+  },
+  // Adding missing dashboard section
+  dashboard: {
+    title: 'Painel de Controle',
+    welcomeBack: 'Bem-vindo(a) de volta',
+    createNew: 'Criar Novo',
+    recentResponses: 'Respostas Recentes',
+    viewAnalytics: 'Ver Análises',
+    noQuizzes: 'Você ainda não tem questionários',
+    createFirst: 'Crie seu primeiro questionário'
   }
 };

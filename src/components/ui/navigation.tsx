@@ -61,7 +61,7 @@ export function Navigation() {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={signOut} className="text-red-500 cursor-pointer">
                 <LogOut className="h-4 w-4 mr-2" />
-                {translations.auth.logout}
+                {translations.auth.signOut}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
