@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Quiz, QuizResponse, QuizResult } from '@/types/quiz';
+import { Quiz, QuizResponse, QuizResult, UserData } from '@/types/quiz';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,9 +11,10 @@ export const useQuizResponse = (quiz: Quiz) => {
   const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
   const { user } = useAuth();
 
-  const handleQuizComplete = async (quizResponses: QuizResponse[]) => {
+  const handleQuizComplete = async (quizResponses: QuizResponse[], userData: UserData) => {
     setResponses(quizResponses);
     
+    // Calculate score
     let totalScore = 0;
     
     quizResponses.forEach(response => {
@@ -36,25 +37,31 @@ export const useQuizResponse = (quiz: Quiz) => {
       }
     });
     
+    // Find matching profile
     const profileRange = quiz.profileRanges.find(range => 
       totalScore >= range.min && totalScore <= range.max
     );
     
+    // Create result object
     const result: QuizResult = {
       quizId: quiz.id,
       responses: quizResponses,
       score: totalScore,
       profile: profileRange?.profile || translations.quiz.unknownProfile,
       completedAt: new Date().toISOString(),
-      isPremium: false
+      isPremium: false,
+      userData
     };
 
     try {
+      console.log("Saving quiz response...");
+      
+      // Insert response without RLS bypass (public access)
       const { data: responseData, error: responseError } = await supabase
         .from('quiz_responses')
         .insert({
           quiz_id: quiz.id,
-          user_id: user?.id,
+          user_id: user?.id || null, // Make user_id optional
           score: totalScore,
           profile: profileRange?.profile || translations.quiz.unknownProfile,
           is_premium: false
@@ -62,8 +69,14 @@ export const useQuizResponse = (quiz: Quiz) => {
         .select('id')
         .single();
 
-      if (responseError) throw responseError;
+      if (responseError) {
+        console.error("Error saving response:", responseError);
+        throw responseError;
+      }
 
+      console.log("Response saved successfully:", responseData);
+
+      // Insert answers
       const answersToInsert = quizResponses.map(response => ({
         response_id: responseData.id,
         question_id: response.questionId,
@@ -74,7 +87,10 @@ export const useQuizResponse = (quiz: Quiz) => {
         .from('question_answers')
         .insert(answersToInsert);
 
-      if (answersError) throw answersError;
+      if (answersError) {
+        console.error("Error saving answers:", answersError);
+        throw answersError;
+      }
 
       toast.success(translations.quiz.responsesSaved);
     } catch (error) {

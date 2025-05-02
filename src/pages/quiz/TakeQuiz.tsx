@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import QuizForm from "@/components/QuizForm";
 import ResultsSummary from "@/components/ResultsSummary";
 import { QuizResponse, QuizResult, UserData } from "@/types/quiz";
@@ -17,11 +17,40 @@ import { QuizErrorBoundary } from "@/components/quiz/QuizErrorBoundary";
 const TakeQuiz = () => {
   const { quizId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { quiz, loading, error } = useQuizData(quizId);
   const [responses, setResponses] = useState<QuizResponse[]>([]);
   const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
   const [showingResults, setShowingResults] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
+  
+  // Check if we're in embed mode
+  const searchParams = new URLSearchParams(location.search);
+  const isEmbedded = searchParams.get('embed') === 'true';
+  
+  // Notify parent window about height changes
+  useEffect(() => {
+    if (isEmbedded) {
+      const sendHeight = () => {
+        const height = document.body.scrollHeight;
+        window.parent.postMessage({ 
+          type: 'quiz-height',
+          height: height 
+        }, '*');
+      };
+      
+      // Send initial height
+      sendHeight();
+      
+      // Set up observer for height changes
+      const resizeObserver = new ResizeObserver(sendHeight);
+      resizeObserver.observe(document.body);
+      
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }
+  }, [isEmbedded, showingResults]);
   
   const handleCompleteQuiz = async (quizResponses: QuizResponse[], userDataInput: UserData) => {
     if (!quiz) return;
@@ -41,6 +70,7 @@ const TakeQuiz = () => {
           result.score >= range.min && result.score <= range.max
         )
       );
+      console.log("Quiz responses saved successfully");
     } catch (err) {
       console.error("Error saving quiz responses:", err);
       toast.error("Erro ao salvar as respostas. Por favor, tente novamente.");
@@ -98,12 +128,14 @@ const TakeQuiz = () => {
           <div className="text-center">
             <h2 className="text-xl font-semibold mb-2">Quiz não encontrado</h2>
             <p>O questionário solicitado não está disponível.</p>
-            <Button 
-              onClick={() => navigate('/')}
-              className="mt-4"
-            >
-              {translations.common.backToHome}
-            </Button>
+            {!isEmbedded && (
+              <Button 
+                onClick={() => navigate('/')}
+                className="mt-4"
+              >
+                {translations.common.backToHome}
+              </Button>
+            )}
           </div>
         </div>
       </QuizErrorBoundary>
@@ -112,18 +144,20 @@ const TakeQuiz = () => {
   
   return (
     <QuizErrorBoundary>
-      <div className="container mx-auto p-4">
+      <div className={`container mx-auto p-4 ${isEmbedded ? '' : 'pt-16'}`}>
         {!showingResults ? (
           <div className="max-w-3xl mx-auto">
             <div className="mb-8">
-              <Button 
-                variant="ghost" 
-                onClick={() => navigate('/')}
-                className="mb-4"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                {translations.common.backToHome}
-              </Button>
+              {!isEmbedded && (
+                <Button 
+                  variant="ghost" 
+                  onClick={() => navigate('/')}
+                  className="mb-4"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  {translations.common.backToHome}
+                </Button>
+              )}
               <div className="text-center">
                 <h1 className="text-2xl md:text-3xl font-bold mb-2">{quiz?.title || 'Untitled Quiz'}</h1>
                 <p className="text-gray-600">{quiz?.description || ''}</p>
@@ -136,13 +170,15 @@ const TakeQuiz = () => {
             {quizResult && (
               <>
                 <div className="mb-4">
-                  <Button 
-                    variant="ghost" 
-                    onClick={handleRetakeQuiz}
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    {translations.quiz.retakeQuiz}
-                  </Button>
+                  {!isEmbedded && (
+                    <Button 
+                      variant="ghost" 
+                      onClick={handleRetakeQuiz}
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      {translations.quiz.retakeQuiz}
+                    </Button>
+                  )}
                 </div>
                 <ResultsSummary 
                   quiz={quiz} 

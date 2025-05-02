@@ -17,8 +17,12 @@ export function Navigation() {
   const location = useLocation();
   const { user, signOut } = useAuth();
   
-  // Não mostrar a navegação na página inicial
-  if (location.pathname === "/") {
+  // Check if we're in embed mode
+  const searchParams = new URLSearchParams(location.search);
+  const isEmbedded = searchParams.get('embed') === 'true';
+  
+  // Don't show navigation on homepage or when embedded
+  if (location.pathname === "/" || isEmbedded) {
     return null;
   }
   

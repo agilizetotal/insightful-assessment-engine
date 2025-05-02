@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -125,7 +124,8 @@ const Analytics = () => {
           questions: questionsData.map(q => ({
             id: q.id,
             text: q.text,
-            type: q.type
+            type: q.type,
+            required: q.required !== undefined ? q.required : true // Add required property
           })),
           profileRanges: profileRangesData.map(p => ({
             min: p.min_score,
