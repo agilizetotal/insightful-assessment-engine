@@ -28,6 +28,22 @@ const ResultsSummary: React.FC<ResultsSummaryProps> = ({
   onSendEmail,
   onUpgrade
 }) => {
+  // Early return with an error message if quiz or result is missing
+  if (!quiz || !result) {
+    return (
+      <div className="container mx-auto p-4">
+        <Card className="p-6">
+          <CardContent>
+            <div className="text-center">
+              <h2 className="text-xl font-semibold mb-2">Results Unavailable</h2>
+              <p>The quiz or result data could not be loaded. Please try again later.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
   // Find the profile range for this result
   const profileRange = quiz.profileRanges.find(range => 
     result.score >= range.min && result.score <= range.max

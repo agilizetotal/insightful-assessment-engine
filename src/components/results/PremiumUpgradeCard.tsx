@@ -16,6 +16,13 @@ interface PremiumUpgradeCardProps {
 export const PremiumUpgradeCard: React.FC<PremiumUpgradeCardProps> = ({
   onUpgrade
 }) => {
+  // Safety check for the onUpgrade function
+  const handleUpgrade = () => {
+    if (typeof onUpgrade === 'function') {
+      onUpgrade();
+    }
+  };
+
   return (
     <Card className="border-quiz-primary border-2 mb-8">
       <CardHeader className="bg-quiz-light">
@@ -57,7 +64,7 @@ export const PremiumUpgradeCard: React.FC<PremiumUpgradeCardProps> = ({
         </div>
       </CardContent>
       <CardFooter>
-        <Button onClick={onUpgrade} className="w-full bg-quiz-primary hover:bg-quiz-secondary">
+        <Button onClick={handleUpgrade} className="w-full bg-quiz-primary hover:bg-quiz-secondary">
           Upgrade Now
         </Button>
       </CardFooter>

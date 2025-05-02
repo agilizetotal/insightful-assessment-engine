@@ -18,6 +18,20 @@ export const ScoreCard: React.FC<ScoreCardProps> = ({
   result,
   calculateMaxScore
 }) => {
+  // Ensure quiz and result exist before rendering
+  if (!quiz || !result) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Score Breakdown</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col justify-center h-[300px]">
+          <div className="text-center">Loading score data...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -41,7 +55,7 @@ export const ScoreCard: React.FC<ScoreCardProps> = ({
           <div className="flex justify-between text-sm">
             <span>Completion:</span>
             <span className="font-medium">
-              {Math.round((result.responses.length / quiz.questions.length) * 100)}%
+              {Math.round((result.responses.length / (quiz?.questions?.length || 1)) * 100)}%
             </span>
           </div>
         </div>
