@@ -34,6 +34,22 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
     phone: ''
   });
 
+  // Safety check for quiz
+  if (!quiz || !quiz.questions) {
+    return (
+      <div className="max-w-2xl mx-auto py-8 text-center">
+        <Card>
+          <CardHeader>
+            <CardTitle>Erro ao carregar o questionário</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Não foi possível carregar o questionário. Por favor, tente novamente mais tarde.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // Function to evaluate if a condition is met
   const evaluateCondition = (condition: Condition): boolean => {
     const response = responses.find(r => r.questionId === condition.questionId);
@@ -110,7 +126,7 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
     // Only run this when we've moved past the user data form
     if (currentQuestionIndex >= 0) {
       // Filter questions based on conditional logic
-      const filteredQuestions = quiz.questions.filter(evaluateConditionsWithLogic);
+      const filteredQuestions = (quiz?.questions || []).filter(evaluateConditionsWithLogic);
       setActiveQuestions(filteredQuestions);
       
       // Organize questions into groups
@@ -134,7 +150,7 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
       
       setQuestionGroups(groups);
     }
-  }, [quiz.questions, responses, currentQuestionIndex]);
+  }, [quiz?.questions, responses, currentQuestionIndex]);
   
   const currentQuestion = currentQuestionIndex >= 0 && activeQuestions.length > 0 ? 
     activeQuestions[currentQuestionIndex < activeQuestions.length ? currentQuestionIndex : 0] : null;
@@ -142,7 +158,7 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
   const progress = 
     currentQuestionIndex < 0 ? 0 :
     activeQuestions.length === 0 ? 100 :
-    (currentQuestionIndex / (activeQuestions.length - 1)) * 100;
+    (currentQuestionIndex / Math.max(1, activeQuestions.length - 1)) * 100;
   
   const handleStartQuiz = () => {
     if (!userData.name || !userData.email) {
@@ -305,7 +321,7 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
       
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl">{currentQuestion.text}</CardTitle>
+          <CardTitle className="text-xl">{currentQuestion.text || 'Pergunta sem texto'}</CardTitle>
           {currentQuestion.required && (
             <CardDescription>Esta questão é obrigatória</CardDescription>
           )}
@@ -325,7 +341,7 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
                 <div key={option.id} className="flex items-center space-x-2 mb-2">
                   <RadioGroupItem value={option.id} id={option.id} />
                   <Label htmlFor={option.id} className="cursor-pointer">
-                    {option.text}
+                    {option.text || 'Opção sem texto'}
                   </Label>
                 </div>
               ))}
@@ -359,7 +375,7 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
                       }}
                     />
                     <Label htmlFor={option.id} className="cursor-pointer">
-                      {option.text}
+                      {option.text || 'Opção sem texto'}
                     </Label>
                   </div>
                 );

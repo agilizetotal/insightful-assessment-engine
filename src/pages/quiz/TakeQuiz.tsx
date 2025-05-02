@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import QuizForm from "@/components/QuizForm";
@@ -30,13 +31,20 @@ const TakeQuiz = () => {
     
     const result = calculateQuizResult(quiz, quizResponses, userDataInput);
     
-    await saveQuizResponses(
-      quiz,
-      quizResponses,
-      userDataInput,
-      result.score,
-      quiz.profileRanges.find(range => result.score >= range.min && result.score <= range.max)
-    );
+    try {
+      await saveQuizResponses(
+        quiz,
+        quizResponses,
+        userDataInput,
+        result.score,
+        quiz.profileRanges.find(range => 
+          result.score >= range.min && result.score <= range.max
+        )
+      );
+    } catch (err) {
+      console.error("Error saving quiz responses:", err);
+      toast.error("Erro ao salvar as respostas. Por favor, tente novamente.");
+    }
     
     setQuizResult(result);
     setShowingResults(true);
@@ -84,7 +92,22 @@ const TakeQuiz = () => {
   }
   
   if (!quiz) {
-    return null;
+    return (
+      <QuizErrorBoundary>
+        <div className="container mx-auto p-4">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">Quiz não encontrado</h2>
+            <p>O questionário solicitado não está disponível.</p>
+            <Button 
+              onClick={() => navigate('/')}
+              className="mt-4"
+            >
+              {translations.common.backToHome}
+            </Button>
+          </div>
+        </div>
+      </QuizErrorBoundary>
+    );
   }
   
   return (
@@ -102,8 +125,8 @@ const TakeQuiz = () => {
                 {translations.common.backToHome}
               </Button>
               <div className="text-center">
-                <h1 className="text-2xl md:text-3xl font-bold mb-2">{quiz.title}</h1>
-                <p className="text-gray-600 max-w-xl mx-auto">{quiz.description}</p>
+                <h1 className="text-2xl md:text-3xl font-bold mb-2">{quiz?.title || 'Untitled Quiz'}</h1>
+                <p className="text-gray-600">{quiz?.description || ''}</p>
               </div>
             </div>
             <QuizForm quiz={quiz} onComplete={handleCompleteQuiz} />

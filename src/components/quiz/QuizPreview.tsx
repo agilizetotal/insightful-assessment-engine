@@ -55,8 +55,8 @@ export const QuizPreview = ({
       {previewMode === 'take' && (
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold mb-2">{quiz.title}</h1>
-            <p className="text-gray-600">{quiz.description || ''}</p>
+            <h1 className="text-2xl font-bold mb-2">{quiz?.title || 'Untitled Quiz'}</h1>
+            <p className="text-gray-600">{quiz?.description || ''}</p>
           </div>
           <QuizForm quiz={quiz} onComplete={onComplete} />
         </div>

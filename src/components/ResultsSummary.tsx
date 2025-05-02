@@ -45,7 +45,7 @@ const ResultsSummary: React.FC<ResultsSummaryProps> = ({
   }
   
   // Find the profile range for this result
-  const profileRange = quiz.profileRanges.find(range => 
+  const profileRange = quiz.profileRanges?.find(range => 
     result.score >= range.min && result.score <= range.max
   );
   
@@ -71,7 +71,7 @@ const ResultsSummary: React.FC<ResultsSummaryProps> = ({
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold mb-2">Your Assessment Results</h1>
         <p className="text-gray-500">
-          Completed on {new Date(result.completedAt).toLocaleDateString()}
+          Completed on {new Date(result.completedAt || new Date()).toLocaleDateString()}
         </p>
       </div>
       
@@ -94,15 +94,17 @@ const ResultsSummary: React.FC<ResultsSummaryProps> = ({
       
       {/* Charts Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <ResultsChart
-          type="radar"
-          title="Competency Areas"
-          data={{
-            labels: Object.keys(categoryScores),
-            values: Object.values(categoryScores),
-          }}
-          downloadFileName="competency-areas"
-        />
+        {Object.keys(categoryScores).length > 0 && (
+          <ResultsChart
+            type="radar"
+            title="Competency Areas"
+            data={{
+              labels: Object.keys(categoryScores),
+              values: Object.values(categoryScores),
+            }}
+            downloadFileName="competency-areas"
+          />
+        )}
         
         <ResultsChart
           type="bar"
