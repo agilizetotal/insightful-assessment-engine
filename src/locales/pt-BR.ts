@@ -36,7 +36,8 @@ export const translations = {
     passwordsDontMatch: 'As senhas não correspondem',
     loginSuccess: 'Login realizado com sucesso',
     signupSuccess: 'Conta criada com sucesso',
-    logoutSuccess: 'Logout realizado com sucesso'
+    logoutSuccess: 'Logout realizado com sucesso',
+    loginRequired: 'É necessário fazer login para continuar'
   },
   quiz: {
     title: 'Questionário',
@@ -44,6 +45,8 @@ export const translations = {
     openQuestion: 'Questão aberta',
     multipleChoice: 'Múltipla escolha',
     checkbox: 'Caixas de seleção',
+    checkboxes: 'Caixas de seleção',
+    openEnded: 'Resposta aberta',
     option: 'Opção',
     addOption: 'Adicionar opção',
     addQuestion: 'Adicionar pergunta',
@@ -73,7 +76,9 @@ export const translations = {
     emailFunctionInfo: 'O envio de e-mail estará disponível em breve!',
     upgradingInfo: 'Atualizando para a versão premium...',
     upgradeComplete: 'Relatório premium ativado!',
-    // Add missing translation keys for quiz conditions
+    saveSuccess: 'Questionário salvo com sucesso!',
+    saveError: 'Erro ao salvar questionário',
+    // Quiz editor translations
     editor: 'Editor de Questionário',
     general: 'Geral',
     questions: 'Perguntas',
@@ -123,8 +128,12 @@ export const translations = {
   dashboard: {
     title: 'Dashboard',
     welcome: 'Bem-vindo ao seu painel',
+    welcomeBack: 'Bem-vindo de volta',
     recentQuizzes: 'Questionários recentes',
     createQuiz: 'Criar questionário',
+    createNew: 'Criar novo',
+    recentResponses: 'Respostas recentes',
+    viewAnalytics: 'Ver análises',
     noQuizzes: 'Você ainda não criou nenhum questionário',
     totalResponses: 'Total de respostas',
     viewDetails: 'Ver detalhes',
@@ -161,6 +170,20 @@ export const translations = {
     step3Description: 'Visualize estatísticas e detalhes das respostas recebidas.',
     getStartedTitle: 'Comece Agora',
     getStartedDescription: 'Crie seu primeiro questionário em minutos.',
-    getStartedButton: 'Criar Conta Gratuita'
+    getStartedButton: 'Criar Conta Gratuita',
+    // Index page additions
+    createQuizzes: 'Criar Questionários',
+    createQuizzesDescription: 'Crie questionários personalizados com diferentes tipos de perguntas.',
+    takeAssessment: 'Responder Avaliação',
+    takeAssessmentDescription: 'Responda uma avaliação de demonstração e veja como funciona.',
+    viewAnalytics: 'Visualizar Análises',
+    viewAnalyticsDescription: 'Acesse estatísticas detalhadas das respostas recebidas.',
+    adminPanel: 'Painel Administrativo',
+    adminPanelDescription: 'Gerencie todos os seus questionários em um único lugar.',
+    settings: 'Configurações',
+    settingsDescription: 'Personalize as configurações do sistema conforme suas necessidades.',
+    getStarted: 'Comece Agora',
+    createQuiz: 'Criar Questionário',
+    tryDemo: 'Experimentar Demo'
   }
 };
