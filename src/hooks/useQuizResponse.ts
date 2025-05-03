@@ -55,16 +55,19 @@ export const useQuizResponse = (quiz: Quiz) => {
 
     try {
       console.log("Saving quiz response...");
+      console.log("Current user:", user ? "Logged in" : "Anonymous");
       
-      // Insert response without RLS bypass (public access)
+      // Insert response - works for both authenticated and anonymous users
       const { data: responseData, error: responseError } = await supabase
         .from('quiz_responses')
         .insert({
           quiz_id: quiz.id,
-          user_id: user?.id || null, // Make user_id optional
+          user_id: user?.id || null, // Will be null for anonymous users
           score: totalScore,
           profile: profileRange?.profile || translations.quiz.unknownProfile,
-          is_premium: false
+          is_premium: false,
+          user_email: userData.email, // Store email for all users
+          user_name: userData.name    // Store name for all users
         })
         .select('id')
         .single();

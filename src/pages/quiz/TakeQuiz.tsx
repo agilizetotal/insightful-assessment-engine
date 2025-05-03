@@ -5,7 +5,7 @@ import QuizForm from "@/components/QuizForm";
 import ResultsSummary from "@/components/ResultsSummary";
 import { QuizResponse, QuizResult, UserData } from "@/types/quiz";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { translations } from "@/locales/pt-BR";
 import { useQuizData } from "@/hooks/useQuizData";
@@ -13,6 +13,7 @@ import { QuizLoading } from "@/components/quiz/QuizLoading";
 import { QuizError } from "@/components/quiz/QuizError";
 import { saveQuizResponses, calculateQuizResult } from "@/utils/quizEvaluation";
 import { QuizErrorBoundary } from "@/components/quiz/QuizErrorBoundary";
+import { useAuth } from "@/contexts/AuthContext";
 
 const TakeQuiz = () => {
   const { quizId } = useParams();
@@ -23,10 +24,23 @@ const TakeQuiz = () => {
   const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
   const [showingResults, setShowingResults] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
+  const { userRole } = useAuth();
   
   // Check if we're in embed mode
   const searchParams = new URLSearchParams(location.search);
   const isEmbedded = searchParams.get('embed') === 'true';
+  
+  // Get shareable link
+  const getShareableLink = () => {
+    const url = new URL(window.location.href);
+    url.search = '';  // Remove any existing query parameters
+    return url.toString();
+  };
+  
+  const copyShareableLink = () => {
+    navigator.clipboard.writeText(getShareableLink());
+    toast.success("Link copiado para a área de transferência!");
+  };
   
   // Notify parent window about height changes
   useEffect(() => {
@@ -85,6 +99,12 @@ const TakeQuiz = () => {
   };
   
   const handleUpgrade = () => {
+    // Only admins and viewers can upgrade to premium
+    if (userRole === 'anonymous') {
+      toast.error("É necessário fazer login para acessar recursos premium");
+      return;
+    }
+    
     toast.info(translations.quiz.upgradingInfo);
     
     setTimeout(() => {
@@ -149,14 +169,23 @@ const TakeQuiz = () => {
           <div className="max-w-3xl mx-auto">
             <div className="mb-8">
               {!isEmbedded && (
-                <Button 
-                  variant="ghost" 
-                  onClick={() => navigate('/')}
-                  className="mb-4"
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  {translations.common.backToHome}
-                </Button>
+                <div className="flex justify-between items-center mb-4">
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => navigate('/')}
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    {translations.common.backToHome}
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={copyShareableLink}
+                  >
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Compartilhar Quiz
+                  </Button>
+                </div>
               )}
               <div className="text-center">
                 <h1 className="text-2xl md:text-3xl font-bold mb-2">{quiz?.title || 'Untitled Quiz'}</h1>
@@ -171,13 +200,23 @@ const TakeQuiz = () => {
               <>
                 <div className="mb-4">
                   {!isEmbedded && (
-                    <Button 
-                      variant="ghost" 
-                      onClick={handleRetakeQuiz}
-                    >
-                      <ArrowLeft className="h-4 w-4 mr-2" />
-                      {translations.quiz.retakeQuiz}
-                    </Button>
+                    <div className="flex justify-between items-center">
+                      <Button 
+                        variant="ghost" 
+                        onClick={handleRetakeQuiz}
+                      >
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        {translations.quiz.retakeQuiz}
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        onClick={copyShareableLink}
+                      >
+                        <Share2 className="h-4 w-4 mr-2" />
+                        Compartilhar Quiz
+                      </Button>
+                    </div>
                   )}
                 </div>
                 <ResultsSummary 

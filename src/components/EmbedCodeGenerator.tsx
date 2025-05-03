@@ -1,148 +1,137 @@
 
-import { useState } from "react";
-import { Button } from "./ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "./ui/card";
-import { Textarea } from "./ui/textarea";
-import { Check, Copy, Link } from "lucide-react";
-import { translations } from "@/locales/pt-BR";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CopyIcon } from "lucide-react";
 import { toast } from "sonner";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "./ui/tabs";
 
 interface EmbedCodeGeneratorProps {
   quizId: string;
 }
 
 export function EmbedCodeGenerator({ quizId }: EmbedCodeGeneratorProps) {
-  const [copied, setCopied] = useState(false);
-  const [copiedLink, setCopiedLink] = useState(false);
+  const [siteUrl, setSiteUrl] = useState('');
+  const [height, setHeight] = useState('700');
+  const [embedCode, setEmbedCode] = useState('');
+  const [shareableLink, setShareableLink] = useState('');
   
-  const hostUrl = window.location.origin;
-  
-  // Direct shareable link
-  const shareableLink = `${hostUrl}/quiz/${quizId}`;
-  
-  // Embed code optimized for WordPress
-  const embedCode = `
-<div id="quiz-container-${quizId}" style="width:100%;max-width:800px;margin:0 auto;"></div>
+  useEffect(() => {
+    // Generate base URL from window location
+    const baseUrl = window.location.origin;
+    const quizUrl = `${baseUrl}/quiz/${quizId}?embed=true`;
+    setShareableLink(`${baseUrl}/quiz/${quizId}`);
+    
+    // Generate responsive iframe code optimized for WordPress
+    const code = `<!-- Quiz Embed Code - Start -->
+<div class="quiz-container" style="width: 100%; position: relative;">
+  <iframe 
+    src="${quizUrl}" 
+    frameborder="0" 
+    style="width: 100%; min-height: ${height}px; border: none; overflow: hidden;" 
+    scrolling="no"
+    allow="fullscreen"
+    title="Questionário Interativo"
+    id="quiz-iframe-${quizId}"
+  ></iframe>
+</div>
 <script>
-  (function() {
-    var container = document.getElementById('quiz-container-${quizId}');
-    var iframe = document.createElement('iframe');
-    // Use embed URL to hide navigation and optimize for embedding
-    iframe.src = '${hostUrl}/quiz/${quizId}?embed=true';
-    iframe.style.width = '100%';
-    iframe.style.height = '600px';
-    iframe.style.border = 'none';
-    iframe.style.borderRadius = '8px';
-    iframe.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
-    container.appendChild(iframe);
-    
-    // Add responsive resizing
-    window.addEventListener('message', function(event) {
-      if (event.origin !== '${hostUrl}') return;
-      if (event.data && event.data.type === 'quiz-height') {
-        iframe.style.height = (event.data.height + 20) + 'px';
+  // Make iframe responsive
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'quiz-height') {
+      var iframe = document.getElementById('quiz-iframe-${quizId}');
+      if (iframe) {
+        iframe.style.height = (e.data.height + 20) + 'px';
       }
-    }, false);
-  })();
+    }
+  }, false);
 </script>
-  `.trim();
+<!-- Quiz Embed Code - End -->`;
 
-  const handleCopy = () => {
+    setEmbedCode(code);
+  }, [quizId, height, siteUrl]);
+
+  const handleCopyEmbedCode = () => {
     navigator.clipboard.writeText(embedCode);
-    setCopied(true);
-    toast.success("Código copiado com sucesso!");
-    
-    setTimeout(() => {
-      setCopied(false);
-    }, 2000);
+    toast.success("Código copiado para a área de transferência!");
   };
-  
-  const handleCopyLink = () => {
+
+  const handleCopyShareableLink = () => {
     navigator.clipboard.writeText(shareableLink);
-    setCopiedLink(true);
-    toast.success("Link copiado com sucesso!");
-    
-    setTimeout(() => {
-      setCopiedLink(false);
-    }, 2000);
+    toast.success("Link copiado para a área de transferência!");
   };
 
   return (
-    <Card className="mt-6">
+    <Card className="w-full">
       <CardHeader>
-        <CardTitle>Compartilhar questionário</CardTitle>
-        <CardDescription>Compartilhe seu questionário com outras pessoas ou incorpore em seu site</CardDescription>
+        <CardTitle>Incorporar Questionário</CardTitle>
+        <CardDescription>
+          Gere um código para incorporar este questionário em seu site WordPress ou qualquer outro site.
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="embed">
-          <TabsList className="mb-4">
-            <TabsTrigger value="embed">Código de incorporação</TabsTrigger>
-            <TabsTrigger value="link">Link compartilhável</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="embed">
-            <div className="space-y-4">
-              <Textarea 
-                value={embedCode}
-                className="font-mono text-sm h-40"
-                readOnly
-              />
-              <Button 
-                onClick={handleCopy} 
-                className="mt-4" 
-                variant={copied ? "outline" : "default"}
-              >
-                {copied ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    Copiado!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copiar código
-                  </>
-                )}
-              </Button>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="link">
-            <div className="space-y-4">
-              <div className="flex flex-col">
-                <p className="text-sm text-muted-foreground mb-2">
-                  Compartilhe este link para permitir que outras pessoas acessem seu questionário.
-                  Cada pessoa terá suas próprias respostas registradas separadamente.
-                </p>
-                <div className="flex items-center gap-2 mt-2">
-                  <Input value={shareableLink} readOnly className="font-mono flex-1" />
-                  <Button 
-                    onClick={handleCopyLink} 
-                    variant={copiedLink ? "outline" : "default"}
-                    size="sm"
-                  >
-                    {copiedLink ? (
-                      <>
-                        <Check className="h-4 w-4 mr-2" />
-                        Copiado!
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-4 w-4 mr-2" />
-                        Copiar
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="height">Altura do iframe (pixels)</Label>
+          <Input
+            id="height"
+            value={height}
+            onChange={(e) => setHeight(e.target.value)}
+            placeholder="700"
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="embed-code">Código para Incorporação</Label>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCopyEmbedCode}
+              className="h-8 gap-1"
+            >
+              <CopyIcon className="h-3.5 w-3.5" />
+              <span>Copiar</span>
+            </Button>
+          </div>
+          <Textarea
+            id="embed-code"
+            readOnly
+            value={embedCode}
+            className="font-mono text-xs h-40"
+          />
+          <p className="text-xs text-muted-foreground">
+            Este código criará um iframe responsivo que se ajusta à altura do conteúdo
+            e é otimizado para WordPress.
+          </p>
+        </div>
+        
+        <div className="space-y-2 pt-2 border-t">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="shareable-link">Link Compartilhável</Label>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleCopyShareableLink}
+              className="h-8 gap-1"
+            >
+              <CopyIcon className="h-3.5 w-3.5" />
+              <span>Copiar</span>
+            </Button>
+          </div>
+          <Input
+            id="shareable-link"
+            readOnly
+            value={shareableLink}
+            className="font-mono text-xs"
+          />
+          <p className="text-xs text-muted-foreground">
+            Este link pode ser compartilhado diretamente com seus usuários. 
+            Cada pessoa que responder terá suas respostas salvas separadamente.
+          </p>
+        </div>
       </CardContent>
     </Card>
   );
 }
-
-// Adding missing Input component import
-import { Input } from "./ui/input";

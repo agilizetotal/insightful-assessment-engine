@@ -15,7 +15,7 @@ import {
 
 export function Navigation() {
   const location = useLocation();
-  const { user, signOut } = useAuth();
+  const { user, signOut, userRole } = useAuth();
   
   // Check if we're in embed mode
   const searchParams = new URLSearchParams(location.search);
@@ -36,14 +36,17 @@ export function Navigation() {
       </Button>
       
       <div className="flex items-center space-x-2">
-        {location.pathname !== "/admin" && (
+        {/* Show admin links only for admin users */}
+        {userRole === 'admin' && location.pathname !== "/admin" && (
           <Button asChild variant="outline" size="sm">
             <Link to="/admin">
-              {translations.dashboard.title}
+              {translations.common.dashboard}
             </Link>
           </Button>
         )}
-        {location.pathname !== "/admin/create-new" && (
+        
+        {/* Show create quiz button only for admin users */}
+        {userRole === 'admin' && location.pathname !== "/admin/create-new" && (
           <Button asChild variant="outline" size="sm">
             <Link to="/admin/create-new">
               <Plus className="h-4 w-4 mr-2" />
@@ -52,12 +55,15 @@ export function Navigation() {
           </Button>
         )}
         
+        {/* User menu shown for logged-in users */}
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="ml-2">
                 <User className="h-4 w-4 mr-2" />
                 {user.email}
+                {userRole === 'admin' && <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full">Admin</span>}
+                {userRole === 'viewer' && <span className="ml-2 text-xs bg-green-100 text-green-800 px-1.5 py-0.5 rounded-full">Viewer</span>}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
