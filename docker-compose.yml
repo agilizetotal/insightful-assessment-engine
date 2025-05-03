@@ -4,14 +4,13 @@ version: '3.8'
 services:
   quiz-app:
     image: node:18-alpine
-    container_name: insightful-assessment-engine
     working_dir: /app
     volumes:
       - ./:/app
     environment:
       - NODE_ENV=production
-      # Adicione variáveis de ambiente específicas da aplicação conforme necessário
       - TZ=America/Sao_Paulo
+      - DOMAIN=${DOMAIN:-seudominio.com.br}
     command: >
       sh -c "npm ci --omit=dev &&
              npm run build &&
@@ -20,8 +19,7 @@ services:
     depends_on:
       - supabase-db
     networks:
-      - quiz-network
-    # Configurações de implantação para Swarm (se estiver usando)
+      - quiz-overlay-network
     deploy:
       mode: replicated
       replicas: 1
@@ -41,10 +39,8 @@ services:
         - traefik.http.services.quiz-app.loadbalancer.server.port=3000
         - traefik.http.services.quiz-app.loadbalancer.passHostHeader=1
 
-  # Se preferir usar Nginx em vez de Traefik, mantenha esta configuração
   nginx:
     image: nginx:alpine
-    container_name: quiz-nginx
     ports:
       - "80:80"
       - "443:443"
@@ -57,12 +53,20 @@ services:
     depends_on:
       - quiz-app
     networks:
-      - quiz-network
-    # Comente essa seção se estiver usando Traefik
+      - quiz-overlay-network
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
 
   supabase-db:
     image: supabase/postgres:14.1.0
-    container_name: quiz-supabase-db
     ports:
       - "5432:5432"
     environment:
@@ -73,24 +77,32 @@ services:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
     networks:
-      - quiz-network
+      - quiz-overlay-network
     deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
       resources:
         limits:
           cpus: "1"
           memory: 1024M
 
-  # Opcionalmente adicionar Redis para cache e gerenciamento de sessões
   redis:
     image: redis:alpine
-    container_name: quiz-redis
     command: redis-server --appendonly yes
     volumes:
       - redis-data:/data
     restart: unless-stopped
     networks:
-      - quiz-network
+      - quiz-overlay-network
     deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
       resources:
         limits:
           cpus: "0.5"
@@ -101,19 +113,6 @@ volumes:
   redis-data:
 
 networks:
-  quiz-network:
-    driver: bridge
-    # Se precisar usar uma rede externa existente, descomente as linhas abaixo
-    # external: true
-    # name: sua-rede-externa
-
-# Opções adicionais de deploy para versões mais recentes do docker-compose
-x-deploy-options:
-  restart_policy:
-    condition: on-failure
-    max_attempts: 3
-  update_config:
-    parallelism: 1
-    delay: 10s
-    order: start-first
-
+  quiz-overlay-network:
+    driver: overlay
+    attachable: true

@@ -22,9 +22,10 @@ O Docker Compose inclui um contêiner PostgreSQL configurado para o Supabase:
 - **Senha**: postgres
 - **Banco de dados**: postgres
 
-## Implantação via Portainer
+## Implantação via Docker Swarm com Portainer
 
 ### Pré-requisitos
+- Docker Swarm inicializado (`docker swarm init`)
 - Portainer instalado e configurado
 - Acesso ao repositório Git
 - [Opcional] Traefik configurado para gerenciamento de SSL (ou use o Nginx incluído)
@@ -54,7 +55,7 @@ O Docker Compose inclui um contêiner PostgreSQL configurado para o Supabase:
 2. **Para adicionar SSL com Nginx**:
    - Coloque os arquivos de certificado em `nginx/certs/` (fullchain.pem e privkey.pem)
    - Descomente a seção SSL no arquivo `nginx/default.conf`
-   - Reinicie o serviço nginx: `docker-compose restart nginx`
+   - Reinicie o serviço nginx: `docker service update --force stack_name_nginx`
 
 #### Usando Traefik (integração avançada)
 
@@ -64,71 +65,32 @@ Se você tem o Traefik configurado como proxy reverso em seu ambiente Swarm ou P
 2. Comente ou remova o serviço nginx se estiver usando apenas Traefik
 3. Configure o Traefik para usar o certresolver mencionado nas labels
 
-### Escalabilidade e Performance
+### Solução de problemas comuns no Docker Swarm
 
-O arquivo docker-compose.yml inclui configurações para:
-- Gerenciamento de recursos (limits de CPU e memória)
-- Políticas de reinicialização
-- Configuração para ambiente Swarm
+#### Problemas com a rede overlay
 
-Para escalar a aplicação em ambientes de produção:
-```bash
-docker service scale stack_name_quiz-app=2
-```
+Se aparecer o erro "A rede não pode ser usada com serviços":
+- Certifique-se que o driver da rede é `overlay` (já configurado neste docker-compose.yml)
+- Verifique se o Docker está em modo Swarm (`docker info | grep Swarm`)
+- Se não estiver em modo Swarm, inicialize-o com `docker swarm init`
 
-### Redis para Cache (Opcional)
+#### Problemas com o acesso ao volume
 
-O docker-compose inclui um servidor Redis que pode ser usado para:
-- Armazenamento de sessão
-- Cache de aplicação
-- Filas de processamento
+Se os contêineres não conseguirem acessar os volumes:
+- Verifique se os volumes são acessíveis em todos os nós do swarm
+- Considere usar um driver de volume compatível com swarm (ex: NFS)
 
-Para usar o Redis na aplicação, configure as variáveis de ambiente apropriadas.
-
-### Solução de problemas comuns
-
-#### Problemas com Docker Compose
-
-Se encontrar o erro "Open /data/compose/XX/docker-compose.yml: no such file or directory":
-
-1. Verifique se o arquivo docker-compose.yml está realmente na raiz do repositório
-2. Certifique-se de que o Portainer tenha permissão para acessar o repositório
-3. Verifique se selecionou a branch correta
-4. Se o arquivo estiver em um subdiretório, especifique o caminho relativo exato no campo "Compose path"
-
-#### Problemas de Rede
-
-Se a aplicação não estiver acessível pelo domínio configurado:
-
-1. Verifique se os registros DNS estão configurados corretamente
-2. Confirme se as portas 80/443 estão abertas no firewall do servidor
-3. Verifique os logs do contêiner para identificar problemas:
-   ```bash
-   docker logs quiz-nginx
-   docker logs insightful-assessment-engine
-   ```
-
-#### Problemas de Certificado SSL
-
-Se estiver tendo problemas com certificados SSL:
-
-1. Verifique se os arquivos do certificado estão no formato correto e localização adequada
-2. Confirme as permissões dos arquivos de certificado (devem ser legíveis pelo usuário nginx)
-3. Se estiver usando Traefik, verifique se o certresolver está configurado corretamente
-
-### Monitoramento e Logs
-
-Para monitorar a aplicação:
+#### Visualizando logs no Swarm
 
 ```bash
 # Ver logs da aplicação
-docker logs -f insightful-assessment-engine
+docker service logs stack_name_quiz-app
 
 # Ver logs do nginx
-docker logs -f quiz-nginx
+docker service logs stack_name_nginx
 
 # Ver logs do banco de dados
-docker logs -f quiz-supabase-db
+docker service logs stack_name_supabase-db
 ```
 
 ### Backup do Banco de Dados
@@ -136,12 +98,26 @@ docker logs -f quiz-supabase-db
 Para fazer backup do banco de dados Supabase:
 
 ```bash
-docker exec quiz-supabase-db pg_dump -U postgres postgres > backup_$(date +%Y%m%d).sql
+docker exec $(docker ps -q -f name=stack_name_supabase-db) pg_dump -U postgres postgres > backup_$(date +%Y%m%d).sql
 ```
 
 Para restaurar um backup:
 
 ```bash
-cat backup_file.sql | docker exec -i quiz-supabase-db psql -U postgres -d postgres
+cat backup_file.sql | docker exec -i $(docker ps -q -f name=stack_name_supabase-db) psql -U postgres -d postgres
 ```
 
+### Escalabilidade e Performance
+
+Para escalar a aplicação em ambientes de produção:
+```bash
+docker service scale stack_name_quiz-app=2
+```
+
+### Monitoramento no Swarm
+
+Para monitorar seus serviços:
+```bash
+docker service ls
+docker service ps stack_name_quiz-app
+```
