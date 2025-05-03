@@ -17,18 +17,21 @@ services:
              npm run build &&
              npm run preview"
     restart: unless-stopped
+    depends_on:
+      - supabase-db
 
-  # Você pode adicionar um serviço de banco de dados Postgres aqui se necessário
-  # postgres:
-  #   image: postgres:14-alpine
-  #   container_name: quiz-db
-  #   environment:
-  #     POSTGRES_PASSWORD: sua_senha_segura
-  #     POSTGRES_USER: quiz_user
-  #     POSTGRES_DB: quiz_database
-  #   volumes:
-  #     - pgdata:/var/lib/postgresql/data
-  #   restart: unless-stopped
+  supabase-db:
+    image: supabase/postgres:14.1.0
+    container_name: quiz-supabase-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
 
-# volumes:
-#   pgdata:
+volumes:
+  pgdata:

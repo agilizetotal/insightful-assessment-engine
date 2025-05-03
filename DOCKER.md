@@ -13,6 +13,17 @@ docker-compose up -d
 
 Acesse a aplicação em `http://localhost:3000`
 
+### Banco de Dados Local (Supabase)
+
+O Docker Compose inclui um contêiner PostgreSQL configurado para o Supabase:
+- **Host**: localhost
+- **Porta**: 5432
+- **Usuário**: postgres
+- **Senha**: postgres
+- **Banco de dados**: postgres
+
+Para conectar a aplicação ao banco de dados local, atualize as configurações em `src/integrations/supabase/client.ts`.
+
 ## Implantação via Portainer
 
 ### Pré-requisitos
