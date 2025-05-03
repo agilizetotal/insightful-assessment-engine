@@ -41,6 +41,23 @@ Para conectar a aplicação ao banco de dados local, atualize as configurações
 
 4. Clique em "Deploy the stack"
 
+### Configuração de Domínio
+
+Para configurar seu domínio personalizado:
+
+1. **Antes de implantar pela primeira vez**:
+   - Edite o arquivo `docker-compose.yml` e altere a variável de ambiente `DOMAIN` no serviço `nginx` para seu domínio real
+   - Crie a pasta `nginx/certs` e adicione seus certificados SSL se necessário
+
+2. **Para domínios já em produção**:
+   - No Portainer, vá até a Stack implantada e clique em "Editor"
+   - Localize a seção do serviço `nginx` e atualize a variável `DOMAIN`
+   - Clique em "Update the stack"
+
+3. **Para adicionar SSL**:
+   - Coloque os arquivos de certificado em `nginx/certs/` (fullchain.pem e privkey.pem)
+   - Descomente a seção SSL no arquivo `nginx/default.conf`
+
 ### Solução de problemas comuns
 
 Se encontrar o erro "Open /data/compose/XX/docker-compose.yml: no such file or directory":
