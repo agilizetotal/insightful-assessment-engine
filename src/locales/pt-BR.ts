@@ -1,3 +1,4 @@
+
 export const translations = {
   common: {
     appName: 'QuizApp',
@@ -16,7 +17,7 @@ export const translations = {
     noData: 'Nenhum dado disponível',
     error: 'Erro',
     preview: 'Pré-visualizar',
-    dashboard: 'Dashboard'  // Added missing translation
+    dashboard: 'Dashboard'
   },
   auth: {
     signIn: 'Entrar',
@@ -71,7 +72,41 @@ export const translations = {
     unknownProfile: 'Perfil desconhecido',
     emailFunctionInfo: 'O envio de e-mail estará disponível em breve!',
     upgradingInfo: 'Atualizando para a versão premium...',
-    upgradeComplete: 'Relatório premium ativado!'
+    upgradeComplete: 'Relatório premium ativado!',
+    // Add missing translation keys for quiz conditions
+    editor: 'Editor de Questionário',
+    general: 'Geral',
+    questions: 'Perguntas',
+    profiles: 'Perfis',
+    conditionalDescription: 'Configure as condições para mostrar esta pergunta com base nas respostas anteriores.',
+    groupLogicExplanation: 'Grupos com OR entre eles, condições com AND dentro do mesmo grupo.',
+    conditionGroup: 'Grupo de condição',
+    or: 'OU',
+    and: 'E',
+    groupConditionsExplanation: 'Todas as condições neste grupo devem ser atendidas (AND lógico).',
+    condition: 'Condição',
+    whenQuestion: 'Quando a pergunta',
+    operator: 'Operador',
+    value: 'Valor',
+    selectQuestion: 'Selecionar pergunta',
+    selectOperator: 'Selecionar operador',
+    selectValue: 'Selecionar valor',
+    equals: 'Igual a',
+    notEquals: 'Diferente de',
+    contains: 'Contém',
+    greaterThan: 'Maior que',
+    lessThan: 'Menor que',
+    enterValue: 'Digite um valor',
+    noConditionsYet: 'Nenhuma condição configurada ainda. Clique em "Adicionar condição" para começar.',
+    firstQuestionNoConditions: 'A primeira pergunta sempre é mostrada e não pode ter condições.',
+    conditionalLogic: 'Lógica condicional',
+    question: 'Pergunta',
+    questionText: 'Texto da pergunta',
+    questionType: 'Tipo de pergunta',
+    selectQuestionType: 'Selecione o tipo',
+    questionPlaceholder: 'Digite o texto da pergunta aqui',
+    requiredQuestion: 'Pergunta obrigatória',
+    editQuiz: 'Editar questionário'
   },
   analytics: {
     title: 'Análises',
@@ -84,6 +119,23 @@ export const translations = {
     downloadCSV: 'Baixar CSV',
     responder: 'Resposta de',
     viewDetails: 'Ver detalhes'
+  },
+  dashboard: {
+    title: 'Dashboard',
+    welcome: 'Bem-vindo ao seu painel',
+    recentQuizzes: 'Questionários recentes',
+    createQuiz: 'Criar questionário',
+    noQuizzes: 'Você ainda não criou nenhum questionário',
+    totalResponses: 'Total de respostas',
+    viewDetails: 'Ver detalhes',
+    editQuiz: 'Editar',
+    viewResponses: 'Ver respostas',
+    deleteQuiz: 'Excluir',
+    confirmDelete: 'Tem certeza que deseja excluir este questionário?',
+    deleteWarning: 'Esta ação não pode ser desfeita e todas as respostas serão perdidas.',
+    embed: 'Incorporar',
+    share: 'Compartilhar',
+    previewQuiz: 'Visualizar'
   },
   index: {
     title: 'Sistema de Questionários',
@@ -110,22 +162,5 @@ export const translations = {
     getStartedTitle: 'Comece Agora',
     getStartedDescription: 'Crie seu primeiro questionário em minutos.',
     getStartedButton: 'Criar Conta Gratuita'
-  },
-  dashboard: {
-    title: 'Dashboard',
-    welcome: 'Bem-vindo ao seu painel',
-    recentQuizzes: 'Questionários recentes',
-    createQuiz: 'Criar questionário',
-    noQuizzes: 'Você ainda não criou nenhum questionário',
-    totalResponses: 'Total de respostas',
-    viewDetails: 'Ver detalhes',
-    editQuiz: 'Editar',
-    viewResponses: 'Ver respostas',
-    deleteQuiz: 'Excluir',
-    confirmDelete: 'Tem certeza que deseja excluir este questionário?',
-    deleteWarning: 'Esta ação não pode ser desfeita e todas as respostas serão perdidas.',
-    embed: 'Incorporar',
-    share: 'Compartilhar',
-    previewQuiz: 'Visualizar'
   }
 };
