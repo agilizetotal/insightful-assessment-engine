@@ -123,7 +123,16 @@ export const translations = {
     noData: 'Nenhum dado disponível para o período selecionado',
     downloadCSV: 'Baixar CSV',
     responder: 'Resposta de',
-    viewDetails: 'Ver detalhes'
+    viewDetails: 'Ver detalhes',
+    noQuizzes: 'Você ainda não criou questionários para analisar',
+    createQuizPrompt: 'Crie um questionário para começar a coletar respostas',
+    selectQuiz: 'Selecione um questionário',
+    mostCommonProfile: 'Perfil mais comum',
+    overview: 'Visão geral',
+    responses: 'Respostas',
+    responsesOverTime: 'Respostas ao longo do tempo',
+    latestResponses: 'Últimas respostas',
+    noResponses: 'Nenhuma resposta ainda para este questionário'
   },
   dashboard: {
     title: 'Dashboard',
