@@ -1,0 +1,34 @@
+
+version: '3.8'
+
+services:
+  quiz-app:
+    image: node:18-alpine
+    container_name: insightful-assessment-engine
+    working_dir: /app
+    volumes:
+      - ./:/app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    command: >
+      sh -c "npm ci --omit=dev &&
+             npm run build &&
+             npm run preview"
+    restart: unless-stopped
+
+  # Você pode adicionar um serviço de banco de dados Postgres aqui se necessário
+  # postgres:
+  #   image: postgres:14-alpine
+  #   container_name: quiz-db
+  #   environment:
+  #     POSTGRES_PASSWORD: sua_senha_segura
+  #     POSTGRES_USER: quiz_user
+  #     POSTGRES_DB: quiz_database
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql/data
+  #   restart: unless-stopped
+
+# volumes:
+#   pgdata:
