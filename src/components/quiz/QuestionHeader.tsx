@@ -1,36 +1,41 @@
 
 import React from 'react';
 import { Progress } from "@/components/ui/progress";
-import { DisplayQuestionGroup } from '@/types/quiz';
 
 interface QuestionHeaderProps {
   progress: number;
   currentQuestionIndex: number;
   totalQuestions: number;
-  currentGroup: DisplayQuestionGroup | null;
+  currentGroup: {
+    title: string;
+    description?: string;
+    weight?: number;
+  } | null;
 }
 
-const QuestionHeader: React.FC<QuestionHeaderProps> = ({ 
-  progress, 
-  currentQuestionIndex, 
-  totalQuestions, 
-  currentGroup 
+const QuestionHeader: React.FC<QuestionHeaderProps> = ({
+  progress,
+  currentQuestionIndex,
+  totalQuestions,
+  currentGroup
 }) => {
   return (
-    <div className="mb-6">
-      <Progress value={progress} className="h-2" />
-      <div className="flex justify-between text-sm text-gray-500 mt-1">
-        <div>
-          {currentGroup && currentGroup.title && (
-            <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs">
-              {currentGroup.title}
-            </span>
+    <div className="mb-8">
+      <div className="flex justify-between text-sm text-gray-500 mb-2">
+        <span>Questão {currentQuestionIndex + 1} de {totalQuestions}</span>
+        <span>{Math.round(progress)}%</span>
+      </div>
+      
+      <Progress value={progress} className="h-2 mb-4" />
+      
+      {currentGroup && (
+        <div className="mb-4">
+          <h2 className="text-lg font-medium">{currentGroup.title}</h2>
+          {currentGroup.description && (
+            <p className="text-gray-500 text-sm">{currentGroup.description}</p>
           )}
         </div>
-        <div>
-          Questão {currentQuestionIndex + 1} de {totalQuestions}
-        </div>
-      </div>
+      )}
     </div>
   );
 };

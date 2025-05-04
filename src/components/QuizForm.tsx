@@ -1,17 +1,25 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Quiz, QuizResponse, Question, Condition } from "@/types/quiz";
+import { Quiz, QuizResponse, Question, Condition, UserData } from "@/types/quiz";
 import { Card, CardContent } from "@/components/ui/card";
-import { QuestionCard } from "@/components/quiz/QuestionCard";
-import { NoQuestionsDisplay } from "@/components/quiz/NoQuestionsDisplay";
+import QuestionCard from "@/components/quiz/QuestionCard";
+import NoQuestionsDisplay from "@/components/quiz/NoQuestionsDisplay";
 import { useQuizResponse } from "@/hooks/useQuizResponse";
-import { UserDataForm } from "@/components/quiz/UserDataForm";
+import UserDataForm from "@/components/quiz/UserDataForm";
 import { translations } from "@/locales/pt-BR";
 
 interface QuizFormProps {
   quiz: Quiz;
   onComplete: (responses: QuizResponse[], userData: UserData) => void;
+}
+
+// Define DisplayQuestionGroup interface
+interface DisplayQuestionGroup {
+  title: string;
+  description?: string;
+  weight?: number;
+  questions: Question[];
 }
 
 const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
@@ -257,6 +265,9 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
       />
     );
   }
+
+  // Import QuestionHeader component
+  import QuestionHeader from "@/components/quiz/QuestionHeader";
   
   return (
     <div className="max-w-2xl mx-auto py-8">
