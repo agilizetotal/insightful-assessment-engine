@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Quiz, Question, QuizResponse, UserData, DisplayQuestionGroup } from '@/types/quiz';
+import { Quiz, Question, QuizResponse, UserData, DisplayQuestionGroup, Condition } from '@/types/quiz';
 import UserDataForm from './quiz/UserDataForm';
 import QuestionCard from './quiz/QuestionCard';
 import QuestionHeader from './quiz/QuestionHeader';

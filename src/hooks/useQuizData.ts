@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Quiz } from "@/types/quiz";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,7 +79,9 @@ export const useQuizData = (quizId: string | undefined) => {
               operator: cond.operator as "equals" | "not-equals" | "greater-than" | "less-than" | "contains",
               value: cond.value,
               logical_operator: 'AND' as "AND" | "OR"
-            })) : []
+            })) : [],
+            imageUrl: question.image_url,
+            groupId: question.group_id
           };
         }));
         
