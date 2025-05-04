@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,15 +17,29 @@ const QuestionContent: React.FC<QuestionContentProps> = ({
   response,
   onResponseChange
 }) => {
+  const [imageError, setImageError] = useState(false);
+
+  const handleImageError = () => {
+    setImageError(true);
+    console.error("Erro ao carregar imagem da questão");
+  };
+
   return (
     <div className="space-y-4">
       {question.imageUrl && (
         <div className="mb-4 rounded-md overflow-hidden border">
-          <img 
-            src={question.imageUrl} 
-            alt="Imagem da questão" 
-            className="w-full h-auto max-h-80 object-contain"
-          />
+          {!imageError ? (
+            <img 
+              src={question.imageUrl} 
+              alt="Imagem da questão" 
+              className="w-full h-auto max-h-80 object-contain"
+              onError={handleImageError}
+            />
+          ) : (
+            <div className="bg-gray-100 p-4 text-center text-gray-500">
+              Não foi possível carregar a imagem
+            </div>
+          )}
         </div>
       )}
     

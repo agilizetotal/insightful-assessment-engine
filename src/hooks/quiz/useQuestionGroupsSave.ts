@@ -13,7 +13,7 @@ const checkQuestionGroupsTable = async (): Promise<boolean> => {
       return false;
     }
     
-    return data;
+    return !!data;
   } catch (error) {
     console.error("Error checking question_groups table:", error);
     return false;
@@ -24,6 +24,7 @@ export const saveQuestionGroups = async (quizId: string, groups: QuestionGroup[]
   if (!groups || groups.length === 0) return true;
   
   try {
+    console.log("Saving question groups:", groups);
     const tableExists = await checkQuestionGroupsTable();
     if (!tableExists) {
       console.error("Question groups table doesn't exist yet");
@@ -47,6 +48,7 @@ export const saveQuestionGroups = async (quizId: string, groups: QuestionGroup[]
     // Delete groups that are no longer present using RPC
     const groupsToDelete = existingGroupIds.filter(id => !newGroupIds.includes(id));
     if (groupsToDelete.length > 0) {
+      console.log("Deleting groups:", groupsToDelete);
       const { error: deleteError } = await supabase.rpc(
         'delete_question_groups', 
         { group_ids: groupsToDelete }
@@ -60,6 +62,7 @@ export const saveQuestionGroups = async (quizId: string, groups: QuestionGroup[]
     
     // Save groups using RPC
     for (const group of groups) {
+      console.log("Upserting group:", group);
       const { error: upsertError } = await supabase.rpc(
         'upsert_question_group',
         {
@@ -78,6 +81,7 @@ export const saveQuestionGroups = async (quizId: string, groups: QuestionGroup[]
       }
     }
     
+    console.log("Question groups saved successfully");
     return true;
   } catch (error) {
     console.error("Error saving question groups:", error);

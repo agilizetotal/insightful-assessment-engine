@@ -13,6 +13,7 @@ import { QuestionConditions } from './QuestionConditions';
 import { QuestionOptions } from './QuestionOptions';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface QuestionItemProps {
   question: Question;
@@ -52,6 +53,20 @@ export const QuestionItem = ({
   onRemoveCondition
 }: QuestionItemProps) => {
   const [showImageInput, setShowImageInput] = useState(!!question.imageUrl);
+  const [imageError, setImageError] = useState(false);
+
+  const handleImageChange = (url: string) => {
+    setImageError(false);
+    onUpdateQuestion({
+      ...question, 
+      imageUrl: url
+    });
+  };
+
+  const handleImageLoadError = () => {
+    setImageError(true);
+    toast.error("Não foi possível carregar a imagem. Verifique o URL.");
+  };
 
   return (
     <Card>
@@ -126,10 +141,7 @@ export const QuestionItem = ({
             <Input 
               id={`question-image-${questionIndex}`} 
               value={question.imageUrl || ''} 
-              onChange={(e) => onUpdateQuestion({
-                ...question, 
-                imageUrl: e.target.value
-              })}
+              onChange={(e) => handleImageChange(e.target.value)}
               placeholder="https://exemplo.com/imagem.jpg"
             />
             {question.imageUrl && (
@@ -138,11 +150,14 @@ export const QuestionItem = ({
                   src={question.imageUrl} 
                   alt="Preview da imagem" 
                   className="w-full h-auto max-h-48 object-contain"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                    console.error('Erro ao carregar imagem');
-                  }}
+                  onError={handleImageLoadError}
+                  style={{ display: imageError ? 'none' : 'block' }}
                 />
+                {imageError && (
+                  <div className="p-4 text-center text-red-500">
+                    Erro ao carregar imagem. Verifique o URL.
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -78,14 +78,15 @@ const EditQuiz = () => {
         if (conditionsError) {
           console.error(`Erro ao carregar condições para questão ${question.id}:`, conditionsError);
         }
-        
+
+        // Convert database structure to our app's structure
         return {
           id: question.id,
           text: question.text,
           type: question.type as any,
           required: question.required,
-          imageUrl: question.image_url || undefined, // Add support for image URL
-          groupId: question.group_id || undefined, // Add support for group ID
+          imageUrl: question.image_url || undefined,
+          groupId: question.group_id || undefined,
           options: optionsData.map(opt => ({
             id: opt.id,
             text: opt.text,
@@ -94,9 +95,9 @@ const EditQuiz = () => {
           conditions: conditionsData ? conditionsData.map(cond => ({
             id: cond.id,
             questionId: cond.question_id,
-            operator: cond.operator,
+            operator: cond.operator as any,
             value: cond.value,
-            logical_operator: cond.logical_operator as 'AND' | 'OR' || 'AND' // Fix: Cast to 'AND' | 'OR'
+            logical_operator: (cond.logical_operator as 'AND' | 'OR' | undefined) || undefined
           })) : []
         };
       }));

@@ -1,4 +1,5 @@
 
+import { useState } from 'react';
 import { QuestionGroup } from '@/types/quiz';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Plus, Trash, ArrowUp, ArrowDown } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface QuestionGroupsProps {
   questionGroups: QuestionGroup[];
@@ -20,14 +22,81 @@ export const QuestionGroups = ({
   onUpdateGroup,
   onRemoveGroup,
 }: QuestionGroupsProps) => {
+  const [debug, setDebug] = useState(false);
+  
+  const handleAddGroup = () => {
+    console.log("Adding new group");
+    onAddGroup();
+    toast.success("Novo grupo adicionado");
+  };
+  
+  const handleUpdateGroup = (index: number, updatedGroup: QuestionGroup) => {
+    console.log("Updating group at index", index, "with data:", updatedGroup);
+    onUpdateGroup(index, updatedGroup);
+  };
+  
+  const handleRemoveGroup = (index: number) => {
+    console.log("Removing group at index", index);
+    onRemoveGroup(index);
+    toast.success("Grupo removido");
+  };
+  
+  const moveGroupUp = (index: number) => {
+    if (index > 0) {
+      console.log("Moving group up:", index);
+      const updatedGroups = [...questionGroups];
+      const temp = updatedGroups[index];
+      updatedGroups[index] = updatedGroups[index - 1];
+      updatedGroups[index - 1] = temp;
+      
+      // Update order values
+      updatedGroups[index].order = index;
+      updatedGroups[index - 1].order = index - 1;
+      
+      handleUpdateGroup(index, updatedGroups[index]);
+      handleUpdateGroup(index - 1, updatedGroups[index - 1]);
+      toast.success("Grupo movido para cima");
+    }
+  };
+  
+  const moveGroupDown = (index: number) => {
+    if (index < questionGroups.length - 1) {
+      console.log("Moving group down:", index);
+      const updatedGroups = [...questionGroups];
+      const temp = updatedGroups[index];
+      updatedGroups[index] = updatedGroups[index + 1];
+      updatedGroups[index + 1] = temp;
+      
+      // Update order values
+      updatedGroups[index].order = index;
+      updatedGroups[index + 1].order = index + 1;
+      
+      handleUpdateGroup(index, updatedGroups[index]);
+      handleUpdateGroup(index + 1, updatedGroups[index + 1]);
+      toast.success("Grupo movido para baixo");
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-medium">Grupos de Perguntas</h2>
-        <Button onClick={onAddGroup}>
-          <Plus className="h-4 w-4 mr-2" />
-          Adicionar Grupo
-        </Button>
+        <div className="space-x-2">
+          <Button onClick={handleAddGroup}>
+            <Plus className="h-4 w-4 mr-2" />
+            Adicionar Grupo
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setDebug(!debug);
+              console.log("Current question groups:", questionGroups);
+            }}
+          >
+            Debug
+          </Button>
+        </div>
       </div>
 
       {questionGroups.length === 0 && (
@@ -47,21 +116,7 @@ export const QuestionGroups = ({
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => {
-                    if (index > 0) {
-                      const updatedGroups = [...questionGroups];
-                      const temp = updatedGroups[index];
-                      updatedGroups[index] = updatedGroups[index - 1];
-                      updatedGroups[index - 1] = temp;
-                      
-                      // Update order values
-                      updatedGroups[index].order = index;
-                      updatedGroups[index - 1].order = index - 1;
-                      
-                      onUpdateGroup(index, updatedGroups[index]);
-                      onUpdateGroup(index - 1, updatedGroups[index - 1]);
-                    }
-                  }}
+                  onClick={() => moveGroupUp(index)}
                   disabled={index === 0}
                 >
                   <ArrowUp className="h-4 w-4" />
@@ -69,21 +124,7 @@ export const QuestionGroups = ({
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => {
-                    if (index < questionGroups.length - 1) {
-                      const updatedGroups = [...questionGroups];
-                      const temp = updatedGroups[index];
-                      updatedGroups[index] = updatedGroups[index + 1];
-                      updatedGroups[index + 1] = temp;
-                      
-                      // Update order values
-                      updatedGroups[index].order = index;
-                      updatedGroups[index + 1].order = index + 1;
-                      
-                      onUpdateGroup(index, updatedGroups[index]);
-                      onUpdateGroup(index + 1, updatedGroups[index + 1]);
-                    }
-                  }}
+                  onClick={() => moveGroupDown(index)}
                   disabled={index === questionGroups.length - 1}
                 >
                   <ArrowDown className="h-4 w-4" />
@@ -92,7 +133,7 @@ export const QuestionGroups = ({
                   size="sm"
                   variant="ghost"
                   className="text-red-500 hover:text-red-700"
-                  onClick={() => onRemoveGroup(index)}
+                  onClick={() => handleRemoveGroup(index)}
                 >
                   <Trash className="h-4 w-4" />
                 </Button>
@@ -100,13 +141,18 @@ export const QuestionGroups = ({
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
+            {debug && (
+              <div className="p-2 bg-gray-100 rounded text-xs overflow-auto">
+                <pre>{JSON.stringify(group, null, 2)}</pre>
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor={`group-title-${index}`}>Título do Grupo</Label>
               <Input
                 id={`group-title-${index}`}
                 value={group.title}
                 onChange={(e) =>
-                  onUpdateGroup(index, {
+                  handleUpdateGroup(index, {
                     ...group,
                     title: e.target.value,
                   })
@@ -120,7 +166,7 @@ export const QuestionGroups = ({
                 id={`group-desc-${index}`}
                 value={group.description || ''}
                 onChange={(e) =>
-                  onUpdateGroup(index, {
+                  handleUpdateGroup(index, {
                     ...group,
                     description: e.target.value,
                   })
@@ -139,7 +185,7 @@ export const QuestionGroups = ({
                 step="0.1"
                 value={group.weight}
                 onChange={(e) =>
-                  onUpdateGroup(index, {
+                  handleUpdateGroup(index, {
                     ...group,
                     weight: parseFloat(e.target.value) || 1,
                   })
