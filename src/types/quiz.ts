@@ -85,3 +85,11 @@ export interface UserData {
   email: string;
   phone: string;
 }
+
+// New type for displaying question groups in the UI
+export interface DisplayQuestionGroup {
+  title?: string;
+  description?: string;
+  weight?: number;
+  questions: Question[];
+}

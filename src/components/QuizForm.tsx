@@ -1,28 +1,14 @@
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { Input } from "@/components/ui/input";
-import { Quiz, Question, QuizResponse, UserData, Condition } from '@/types/quiz';
-import { translations } from '@/locales/pt-BR';
-import { Separator } from "@/components/ui/separator";
+import { Quiz, Question, QuizResponse, UserData, DisplayQuestionGroup } from '@/types/quiz';
+import UserDataForm from './quiz/UserDataForm';
+import QuestionCard from './quiz/QuestionCard';
+import QuestionHeader from './quiz/QuestionHeader';
+import NoQuestionsDisplay from './quiz/NoQuestionsDisplay';
 
 interface QuizFormProps {
   quiz: Quiz;
   onComplete: (responses: QuizResponse[], userData: UserData) => void;
-}
-
-// Group questions based on conditions and question groups
-interface DisplayQuestionGroup {
-  title?: string;
-  description?: string;
-  weight?: number;
-  questions: Question[];
 }
 
 const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
@@ -40,14 +26,10 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
   if (!quiz || !quiz.questions) {
     return (
       <div className="max-w-2xl mx-auto py-8 text-center">
-        <Card>
-          <CardHeader>
-            <CardTitle>Erro ao carregar o questionário</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Não foi possível carregar o questionário. Por favor, tente novamente mais tarde.</p>
-          </CardContent>
-        </Card>
+        <div>
+          <h2 className="text-xl font-semibold">Erro ao carregar o questionário</h2>
+          <p className="text-gray-500 mt-2">Não foi possível carregar o questionário. Por favor, tente novamente mais tarde.</p>
+        </div>
       </div>
     );
   }
@@ -242,217 +224,55 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
     
     return !response.answer;
   };
+
+  // Find which group the current question belongs to
+  const currentGroupIndex = currentQuestion ? questionGroups.findIndex(group =>
+    group.questions.some(q => q.id === currentQuestion.id)
+  ) : -1;
+  
+  // Find the group details
+  const currentGroup = currentGroupIndex > -1 ? questionGroups[currentGroupIndex] : null;
   
   // User data form
   if (currentQuestionIndex < 0) {
     return (
-      <div className="max-w-2xl mx-auto py-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Seus dados</CardTitle>
-            <CardDescription>Preencha seus dados para iniciar o questionário</CardDescription>
-          </CardHeader>
-          
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome completo *</Label>
-              <Input
-                id="name"
-                value={userData.name}
-                onChange={(e) => setUserData({ ...userData, name: e.target.value })}
-                placeholder="Digite seu nome completo"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={userData.email}
-                onChange={(e) => setUserData({ ...userData, email: e.target.value })}
-                placeholder="Digite seu e-mail"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
-              <Input
-                id="phone"
-                value={userData.phone}
-                onChange={(e) => setUserData({ ...userData, phone: e.target.value })}
-                placeholder="Digite seu telefone"
-              />
-            </div>
-          </CardContent>
-          
-          <CardFooter>
-            <Button 
-              onClick={handleStartQuiz}
-              disabled={!userData.name || !userData.email}
-              className="w-full"
-            >
-              Iniciar questionário
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
+      <UserDataForm 
+        userData={userData} 
+        onUserDataChange={setUserData}
+        onStartQuiz={handleStartQuiz}
+      />
     );
   }
   
   if (!currentQuestion) {
     return (
-      <div className="max-w-2xl mx-auto py-8 text-center">
-        {activeQuestions.length === 0 ? (
-          <div>
-            <h2 className="text-xl font-semibold mb-2">Nenhuma questão disponível</h2>
-            <p className="text-gray-500 mb-4">Não existem questões que atendam aos critérios atuais</p>
-            <Button onClick={() => onComplete(responses, userData)}>
-              Finalizar mesmo assim
-            </Button>
-          </div>
-        ) : (
-          <div className="animate-pulse">
-            <div className="h-6 bg-gray-200 rounded w-3/4 mx-auto mb-4"></div>
-            <div className="h-20 bg-gray-200 rounded w-full mb-6"></div>
-            <div className="h-10 bg-gray-200 rounded w-1/2 mx-auto"></div>
-          </div>
-        )}
-      </div>
+      <NoQuestionsDisplay
+        activeQuestionsCount={activeQuestions.length}
+        onComplete={onComplete}
+        responses={responses}
+        userData={userData}
+      />
     );
   }
   
-  // Find which group the current question belongs to
-  const currentGroupIndex = questionGroups.findIndex(group =>
-    group.questions.some(q => q.id === currentQuestion.id)
-  );
-  
-  // Find the group details
-  const currentGroup = currentGroupIndex > -1 ? questionGroups[currentGroupIndex] : null;
-  
   return (
     <div className="max-w-2xl mx-auto py-8">
-      <div className="mb-6">
-        <Progress value={progress} className="h-2" />
-        <div className="flex justify-between text-sm text-gray-500 mt-1">
-          <div>
-            {currentGroup && (
-              <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs">
-                {currentGroup.title}
-              </span>
-            )}
-          </div>
-          <div>
-            Questão {currentQuestionIndex + 1} de {activeQuestions.length}
-          </div>
-        </div>
-      </div>
+      <QuestionHeader
+        progress={progress}
+        currentQuestionIndex={currentQuestionIndex}
+        totalQuestions={activeQuestions.length}
+        currentGroup={currentGroup}
+      />
       
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">{currentQuestion.text || 'Pergunta sem texto'}</CardTitle>
-          {currentQuestion.required && (
-            <CardDescription>Esta questão é obrigatória</CardDescription>
-          )}
-        </CardHeader>
-        
-        <CardContent className="space-y-4">
-          {currentQuestion.imageUrl && (
-            <div className="mb-4 rounded-md overflow-hidden border">
-              <img 
-                src={currentQuestion.imageUrl} 
-                alt="Imagem da questão" 
-                className="w-full h-auto max-h-80 object-contain"
-              />
-            </div>
-          )}
-        
-          {currentQuestion.type === 'multiple-choice' && (
-            <RadioGroup
-              onValueChange={(value) => 
-                handleResponseChange(currentQuestion.id, value)
-              }
-              value={
-                responses.find(r => r.questionId === currentQuestion.id)?.answer as string || ''
-              }
-            >
-              {currentQuestion.options?.map(option => (
-                <div key={option.id} className="flex items-center space-x-2 mb-2">
-                  <RadioGroupItem value={option.id} id={option.id} />
-                  <Label htmlFor={option.id} className="cursor-pointer">
-                    {option.text || 'Opção sem texto'}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
-          )}
-          
-          {currentQuestion.type === 'checkbox' && (
-            <div className="space-y-2">
-              {currentQuestion.options?.map(option => {
-                const currentResponses = responses.find(
-                  r => r.questionId === currentQuestion.id
-                )?.answer as string[] || [];
-                
-                return (
-                  <div key={option.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={option.id}
-                      checked={currentResponses.includes(option.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          handleResponseChange(
-                            currentQuestion.id, 
-                            [...currentResponses, option.id]
-                          );
-                        } else {
-                          handleResponseChange(
-                            currentQuestion.id,
-                            currentResponses.filter(id => id !== option.id)
-                          );
-                        }
-                      }}
-                    />
-                    <Label htmlFor={option.id} className="cursor-pointer">
-                      {option.text || 'Opção sem texto'}
-                    </Label>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          
-          {currentQuestion.type === 'open-ended' && (
-            <Textarea
-              placeholder="Digite sua resposta aqui..."
-              value={
-                responses.find(r => r.questionId === currentQuestion.id)?.answer as string || ''
-              }
-              onChange={(e) => 
-                handleResponseChange(currentQuestion.id, e.target.value)
-              }
-              className="min-h-[120px]"
-            />
-          )}
-        </CardContent>
-        
-        <CardFooter className="flex justify-between">
-          <Button
-            variant="outline"
-            onClick={handlePreviousQuestion}
-          >
-            {translations.common.previous}
-          </Button>
-          <Button
-            onClick={handleNextQuestion}
-            disabled={isNextDisabled()}
-          >
-            {currentQuestionIndex === activeQuestions.length - 1 ? translations.common.complete : translations.common.next}
-          </Button>
-        </CardFooter>
-      </Card>
+      <QuestionCard
+        question={currentQuestion}
+        response={responses.find(r => r.questionId === currentQuestion.id)?.answer || (currentQuestion.type === 'checkbox' ? [] : '')}
+        onResponseChange={handleResponseChange}
+        onPreviousClick={handlePreviousQuestion}
+        onNextClick={handleNextQuestion}
+        isNextDisabled={isNextDisabled()}
+        isLastQuestion={currentQuestionIndex === activeQuestions.length - 1}
+      />
     </div>
   );
 };
