@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Quiz } from "@/types/quiz";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +20,7 @@ export const useQuizData = (quizId: string | undefined) => {
           return;
         }
         
+        // Fetch quiz basic data
         const { data: quizData, error: quizError } = await supabase
           .from('quizzes')
           .select('*')
@@ -29,6 +31,7 @@ export const useQuizData = (quizId: string | undefined) => {
           throw quizError;
         }
         
+        // Fetch questions
         const { data: questionsData, error: questionsError } = await supabase
           .from('questions')
           .select('*')
@@ -39,7 +42,9 @@ export const useQuizData = (quizId: string | undefined) => {
           throw questionsError;
         }
         
+        // Fetch options and conditions for each question
         const questionsWithOptions = await Promise.all(questionsData.map(async (question) => {
+          // Fetch options
           const { data: optionsData, error: optionsError } = await supabase
             .from('question_options')
             .select('*')
@@ -55,6 +60,7 @@ export const useQuizData = (quizId: string | undefined) => {
             };
           }
           
+          // Fetch conditions
           const { data: conditionsData, error: conditionsError } = await supabase
             .from('question_conditions')
             .select('*')
@@ -78,13 +84,14 @@ export const useQuizData = (quizId: string | undefined) => {
               questionId: cond.question_id,
               operator: cond.operator as "equals" | "not-equals" | "greater-than" | "less-than" | "contains",
               value: cond.value,
-              logical_operator: 'AND' as "AND" | "OR"
+              logical_operator: cond.logical_operator as "AND" | "OR" || 'AND'
             })) : [],
             imageUrl: question.image_url,
             groupId: question.group_id
           };
         }));
         
+        // Fetch profile ranges
         const { data: rangesData, error: rangesError } = await supabase
           .from('profile_ranges')
           .select('*')
@@ -94,20 +101,19 @@ export const useQuizData = (quizId: string | undefined) => {
           console.error("Erro ao carregar faixas de perfil:", rangesError);
         }
         
-        // Get question groups for the quiz
+        // Get question groups using RPC function
         let questionGroups = [];
         try {
-          const { data: groupsData, error: groupsError } = await supabase
-            .from('question_groups')
-            .select('*')
-            .eq('quiz_id', quizId)
-            .order('order_index', { ascending: true });
+          const { data: groupsData, error: groupsError } = await supabase.rpc(
+            'get_question_groups_by_quiz', 
+            { quiz_id_param: quizId }
+          );
             
           if (groupsError) {
             throw groupsError;
           }
           
-          questionGroups = groupsData ? groupsData.map(group => ({
+          questionGroups = groupsData ? groupsData.map((group: any) => ({
             id: group.id,
             title: group.title,
             description: group.description || '',

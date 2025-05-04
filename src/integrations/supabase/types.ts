@@ -91,6 +91,7 @@ export type Database = {
           created_at: string | null
           dependent_question_id: string | null
           id: string
+          logical_operator: string | null
           operator: Database["public"]["Enums"]["condition_operator"]
           question_id: string | null
           value: string
@@ -99,6 +100,7 @@ export type Database = {
           created_at?: string | null
           dependent_question_id?: string | null
           id?: string
+          logical_operator?: string | null
           operator: Database["public"]["Enums"]["condition_operator"]
           question_id?: string | null
           value: string
@@ -107,6 +109,7 @@ export type Database = {
           created_at?: string | null
           dependent_question_id?: string | null
           id?: string
+          logical_operator?: string | null
           operator?: Database["public"]["Enums"]["condition_operator"]
           question_id?: string | null
           value?: string
@@ -124,6 +127,44 @@ export type Database = {
             columns: ["question_id"]
             isOneToOne: false
             referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      question_groups: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          order_index: number | null
+          quiz_id: string | null
+          title: string
+          weight: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          order_index?: number | null
+          quiz_id?: string | null
+          title: string
+          weight?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          order_index?: number | null
+          quiz_id?: string | null
+          title?: string
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_groups_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
             referencedColumns: ["id"]
           },
         ]
@@ -166,7 +207,9 @@ export type Database = {
       questions: {
         Row: {
           created_at: string | null
+          group_id: string | null
           id: string
+          image_url: string | null
           order_index: number
           quiz_id: string | null
           required: boolean | null
@@ -176,7 +219,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          group_id?: string | null
           id?: string
+          image_url?: string | null
           order_index: number
           quiz_id?: string | null
           required?: boolean | null
@@ -186,7 +231,9 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          group_id?: string | null
           id?: string
+          image_url?: string | null
           order_index?: number
           quiz_id?: string | null
           required?: boolean | null
@@ -195,6 +242,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "questions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "question_groups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "questions_quiz_id_fkey"
             columns: ["quiz_id"]
@@ -295,7 +349,45 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_question_groups_functions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      create_question_groups_table_if_not_exists: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      delete_question_groups: {
+        Args: { group_ids: string[] }
+        Returns: undefined
+      }
+      get_question_groups_by_quiz: {
+        Args: { quiz_id_param: string }
+        Returns: {
+          created_at: string | null
+          description: string | null
+          id: string
+          order_index: number | null
+          quiz_id: string | null
+          title: string
+          weight: number | null
+        }[]
+      }
+      question_groups_exists: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      upsert_question_group: {
+        Args: {
+          group_id: string
+          quiz_id_param: string
+          title_param: string
+          description_param: string
+          weight_param: number
+          order_index_param: number
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "viewer" | "anonymous"

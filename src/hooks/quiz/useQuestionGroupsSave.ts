@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 // Helper function to validate that question_groups table exists
 const checkQuestionGroupsTable = async (): Promise<boolean> => {
   try {
-    // Attempt to get schema information using raw SQL query instead
+    // Attempt to check if the table exists using the RPC function
     const { data, error } = await supabase.rpc('question_groups_exists');
     
     if (error) {
@@ -30,8 +30,7 @@ export const saveQuestionGroups = async (quizId: string, groups: QuestionGroup[]
       return false;
     }
     
-    // We'll use raw SQL for operations to avoid type issues
-    // Get existing groups to determine which ones to delete
+    // Use RPC function to get existing groups
     const { data: existingGroups, error: fetchError } = await supabase.rpc(
       'get_question_groups_by_quiz',
       { quiz_id_param: quizId }
@@ -42,10 +41,10 @@ export const saveQuestionGroups = async (quizId: string, groups: QuestionGroup[]
       return false;
     }
     
-    const existingGroupIds = existingGroups?.map(g => g.id) || [];
+    const existingGroupIds = existingGroups?.map((g: any) => g.id) || [];
     const newGroupIds = groups.map(g => g.id);
     
-    // Delete groups that are no longer present
+    // Delete groups that are no longer present using RPC
     const groupsToDelete = existingGroupIds.filter(id => !newGroupIds.includes(id));
     if (groupsToDelete.length > 0) {
       const { error: deleteError } = await supabase.rpc(

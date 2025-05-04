@@ -1,10 +1,13 @@
-
-import { useState, useEffect } from 'react';
-import { Quiz, Question, QuizResponse, UserData, DisplayQuestionGroup, Condition } from '@/types/quiz';
-import UserDataForm from './quiz/UserDataForm';
-import QuestionCard from './quiz/QuestionCard';
-import QuestionHeader from './quiz/QuestionHeader';
-import NoQuestionsDisplay from './quiz/NoQuestionsDisplay';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Quiz, QuizResponse, Question, Condition } from "@/types/quiz";
+import { Card, CardContent } from "@/components/ui/card";
+import { QuestionCard } from "@/components/quiz/QuestionCard";
+import { NoQuestionsDisplay } from "@/components/quiz/NoQuestionsDisplay";
+import { useQuizResponse } from "@/hooks/useQuizResponse";
+import { UserDataForm } from "@/components/quiz/UserDataForm";
+import { translations } from "@/locales/pt-BR";
 
 interface QuizFormProps {
   quiz: Quiz;
