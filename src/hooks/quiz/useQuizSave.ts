@@ -4,11 +4,9 @@ import { Quiz } from '@/types/quiz';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
-
-// Import the modular functions
-import { saveQuestions } from './quiz/useQuestionsSave';
-import { saveProfileRanges } from './quiz/useProfileRangesSave';
-import { saveQuestionGroups } from './quiz/useQuestionGroupsSave';
+import { saveQuestions } from './useQuestionsSave';
+import { saveProfileRanges } from './useProfileRangesSave';
+import { saveQuestionGroups } from './useQuestionGroupsSave';
 
 export const useQuizSave = () => {
   const [isSaving, setIsSaving] = useState(false);

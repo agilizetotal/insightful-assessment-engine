@@ -18,6 +18,7 @@ const CreateNewQuiz: React.FC = () => {
     title: 'Novo Questionário',
     description: 'Descreva o propósito deste questionário',
     questions: [],
+    questionGroups: [], // Add empty questionGroups
     profileRanges: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
