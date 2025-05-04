@@ -117,24 +117,30 @@ const Analytics = () => {
         setResponsesByDate(responsesByDateArray);
         
         // Create formatted quiz object
-        const formattedQuiz: Quiz = {
-          id: quizData.id,
-          title: quizData.title,
-          description: quizData.description || '',
-          questions: questionsData.map(q => ({
-            id: q.id,
-            text: q.text,
-            type: q.type,
-            required: q.required !== undefined ? q.required : true // Add required property
-          })),
-          profileRanges: profileRangesData.map(p => ({
-            min: p.min_score,
-            max: p.max_score,
-            profile: p.profile,
-            description: p.description || ''
-          })),
-          createdAt: quizData.created_at,
-          updatedAt: quizData.updated_at
+        const quizId = quizData.id;
+        const questions = questionsData.map(q => ({
+          id: q.id,
+          text: q.text,
+          type: q.type,
+          required: q.required !== undefined ? q.required : true // Add required property
+        }));
+        
+        const profileRanges = profileRangesData.map(p => ({
+          min: p.min_score,
+          max: p.max_score,
+          profile: p.profile,
+          description: p.description || ''
+        }));
+        
+        const quiz: Quiz = {
+          id: quizId,
+          title: "Analytics Dashboard",
+          description: "Response analytics for your quiz",
+          questions: questions,
+          questionGroups: [], // Add this empty array to fix the type error
+          profileRanges: profileRanges,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         };
       } catch (error) {
         console.error("Error fetching selected quiz data:", error);

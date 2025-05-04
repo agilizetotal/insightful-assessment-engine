@@ -79,7 +79,6 @@ export const useQuizData = (quizId: string | undefined) => {
               questionId: cond.question_id,
               operator: cond.operator as "equals" | "not-equals" | "greater-than" | "less-than" | "contains",
               value: cond.value,
-              // Fix here: Using defaulted logical_operator since it might be missing in some database records
               logical_operator: 'AND' as "AND" | "OR"
             })) : []
           };
@@ -94,11 +93,37 @@ export const useQuizData = (quizId: string | undefined) => {
           console.error("Erro ao carregar faixas de perfil:", rangesError);
         }
         
+        // Get question groups for the quiz
+        let questionGroups = [];
+        try {
+          const { data: groupsData, error: groupsError } = await supabase
+            .from('question_groups')
+            .select('*')
+            .eq('quiz_id', quizId)
+            .order('order_index', { ascending: true });
+            
+          if (groupsError) {
+            throw groupsError;
+          }
+          
+          questionGroups = groupsData ? groupsData.map(group => ({
+            id: group.id,
+            title: group.title,
+            description: group.description || '',
+            weight: group.weight || 1,
+            order: group.order_index || 0
+          })) : [];
+        } catch (error) {
+          console.error("Erro ao carregar grupos de perguntas:", error);
+          questionGroups = [];
+        }
+        
         const loadedQuiz: Quiz = {
           id: quizData.id,
           title: quizData.title,
           description: quizData.description || '',
           questions: questionsWithOptions,
+          questionGroups: questionGroups,
           profileRanges: rangesData ? rangesData.map(range => ({
             min: range.min_score,
             max: range.max_score,

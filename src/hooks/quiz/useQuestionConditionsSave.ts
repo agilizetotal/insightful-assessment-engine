@@ -13,7 +13,7 @@ export const saveQuestionConditions = async (questionId: string, conditions: Con
       .eq('dependent_question_id', questionId);
       
     const existingConditionIds = existingConditions?.map(c => c.id) || [];
-    const newConditionIds = conditions.map(c => c.id).filter(id => id) as string[];
+    const newConditionIds = conditions.filter(c => c.id).map(c => c.id!) as string[];
     
     // Delete conditions that are no longer present
     const conditionsToDelete = existingConditionIds.filter(id => !newConditionIds.includes(id));
