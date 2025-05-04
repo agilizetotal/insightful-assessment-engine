@@ -8,6 +8,7 @@ import NoQuestionsDisplay from "@/components/quiz/NoQuestionsDisplay";
 import { useQuizResponse } from "@/hooks/useQuizResponse";
 import UserDataForm from "@/components/quiz/UserDataForm";
 import { translations } from "@/locales/pt-BR";
+import QuestionHeader from "@/components/quiz/QuestionHeader";
 
 interface QuizFormProps {
   quiz: Quiz;
@@ -265,9 +266,6 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
       />
     );
   }
-
-  // Import QuestionHeader component
-  import QuestionHeader from "@/components/quiz/QuestionHeader";
   
   return (
     <div className="max-w-2xl mx-auto py-8">

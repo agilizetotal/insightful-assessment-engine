@@ -1,4 +1,3 @@
-
 export type QuestionType = 'multiple-choice' | 'checkbox' | 'open-ended';
 
 export interface Option {

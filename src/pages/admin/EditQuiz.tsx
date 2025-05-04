@@ -96,7 +96,7 @@ const EditQuiz = () => {
             questionId: cond.question_id,
             operator: cond.operator,
             value: cond.value,
-            logical_operator: cond.logical_operator || 'AND' // Add support for logical operator
+            logical_operator: cond.logical_operator as 'AND' | 'OR' || 'AND' // Fix: Cast to 'AND' | 'OR'
           })) : []
         };
       }));
