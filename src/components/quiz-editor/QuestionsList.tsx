@@ -1,5 +1,5 @@
 
-import { Question, Option, Condition } from '@/types/quiz';
+import { Question, Option, Condition, QuestionGroup } from '@/types/quiz';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { translations } from '@/locales/pt-BR';
@@ -7,6 +7,7 @@ import { QuestionItem } from './QuestionItem';
 
 interface QuestionsListProps {
   questions: Question[];
+  questionGroups: QuestionGroup[];
   onUpdateQuestion: (index: number, updatedQuestion: Question) => void;
   onRemoveQuestion: (index: number) => void;
   onMoveQuestion: (index: number, direction: 'up' | 'down') => void;
@@ -22,6 +23,7 @@ interface QuestionsListProps {
 
 export const QuestionsList = ({
   questions,
+  questionGroups,
   onUpdateQuestion,
   onRemoveQuestion,
   onMoveQuestion,
@@ -44,6 +46,7 @@ export const QuestionsList = ({
           isFirst={index === 0}
           isLast={index === questions.length - 1}
           previousQuestions={questions.slice(0, index)}
+          questionGroups={questionGroups}
           onUpdateQuestion={(updatedQuestion) => onUpdateQuestion(index, updatedQuestion)}
           onRemoveQuestion={() => onRemoveQuestion(index)}
           onMoveQuestion={(direction) => onMoveQuestion(index, direction)}

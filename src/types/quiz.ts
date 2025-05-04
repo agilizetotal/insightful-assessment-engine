@@ -1,3 +1,4 @@
+
 export type QuestionType = 'multiple-choice' | 'checkbox' | 'open-ended';
 
 export interface Option {
@@ -24,6 +25,16 @@ export interface Question {
   options?: Option[];
   required: boolean;
   conditions?: Condition[];
+  imageUrl?: string;
+  groupId?: string;
+}
+
+export interface QuestionGroup {
+  id: string;
+  title: string;
+  description?: string;
+  weight: number;
+  order: number;
 }
 
 export interface ProfileRange {
@@ -38,6 +49,7 @@ export interface Quiz {
   title: string;
   description: string;
   questions: Question[];
+  questionGroups: QuestionGroup[];
   profileRanges: ProfileRange[];
   createdAt: string;
   updatedAt: string;
@@ -48,10 +60,19 @@ export interface QuizResponse {
   answer: string | string[];
 }
 
+export interface GroupScore {
+  groupId: string;
+  groupTitle: string;
+  score: number;
+  maxScore: number;
+  percentage: number;
+}
+
 export interface QuizResult {
   quizId: string;
   responses: QuizResponse[];
   score: number;
+  groupScores?: GroupScore[];
   profile: string;
   completedAt: string;
   userId?: string;

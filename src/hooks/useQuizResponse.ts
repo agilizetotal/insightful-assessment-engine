@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { Quiz, QuizResponse, QuizResult, UserData } from '@/types/quiz';
+import { Quiz, QuizResponse, QuizResult, UserData, GroupScore } from '@/types/quiz';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,26 +13,87 @@ export const useQuizResponse = (quiz: Quiz) => {
   const handleQuizComplete = async (quizResponses: QuizResponse[], userData: UserData) => {
     setResponses(quizResponses);
     
-    // Calculate score
+    // Calculate overall score
     let totalScore = 0;
     
+    // Calculate group scores
+    const groupScores: GroupScore[] = [];
+    const groupScoreMap = new Map<string, {score: number, maxScore: number}>();
+    
+    // Initialize group scores
+    quiz.questionGroups?.forEach(group => {
+      groupScoreMap.set(group.id, {score: 0, maxScore: 0});
+    });
+    
+    // Calculate scores for each response
     quizResponses.forEach(response => {
       const question = quiz.questions.find(q => q.id === response.questionId);
       if (!question || question.type === 'open-ended') return;
       
+      let questionScore = 0;
+      let questionMaxScore = 0;
+      
       if (question.type === 'multiple-choice') {
         const selectedOption = question.options?.find(opt => opt.id === response.answer);
         if (selectedOption) {
-          totalScore += selectedOption.weight;
+          questionScore = selectedOption.weight;
         }
+        
+        // Calculate max possible score for this question
+        const maxOption = question.options?.reduce((max, opt) => 
+          opt.weight > max.weight ? opt : max, 
+          question.options[0]);
+          
+        questionMaxScore = maxOption?.weight || 0;
       } else if (question.type === 'checkbox') {
         const selectedOptionIds = response.answer as string[];
         const selectedOptions = question.options?.filter(opt => selectedOptionIds.includes(opt.id));
         if (selectedOptions) {
           selectedOptions.forEach(opt => {
-            totalScore += opt.weight;
+            questionScore += opt.weight;
           });
         }
+        
+        // Max score would be selecting all positive options
+        question.options?.forEach(opt => {
+          if (opt.weight > 0) {
+            questionMaxScore += opt.weight;
+          }
+        });
+      }
+      
+      // Apply group weight if question belongs to a group
+      const groupWeight = question.groupId ? 
+        quiz.questionGroups?.find(g => g.id === question.groupId)?.weight || 1 : 1;
+      
+      questionScore *= groupWeight;
+      questionMaxScore *= groupWeight;
+      
+      // Add to total score
+      totalScore += questionScore;
+      
+      // Add to group scores if applicable
+      if (question.groupId && groupScoreMap.has(question.groupId)) {
+        const groupData = groupScoreMap.get(question.groupId);
+        if (groupData) {
+          groupData.score += questionScore;
+          groupData.maxScore += questionMaxScore;
+          groupScoreMap.set(question.groupId, groupData);
+        }
+      }
+    });
+    
+    // Convert group score map to array
+    groupScoreMap.forEach((scores, groupId) => {
+      const group = quiz.questionGroups?.find(g => g.id === groupId);
+      if (group && scores.maxScore > 0) {
+        groupScores.push({
+          groupId,
+          groupTitle: group.title,
+          score: scores.score,
+          maxScore: scores.maxScore,
+          percentage: (scores.score / scores.maxScore) * 100
+        });
       }
     });
     
@@ -47,6 +107,7 @@ export const useQuizResponse = (quiz: Quiz) => {
       quizId: quiz.id,
       responses: quizResponses,
       score: totalScore,
+      groupScores,
       profile: profileRange?.profile || translations.quiz.unknownProfile,
       completedAt: new Date().toISOString(),
       isPremium: false,
@@ -94,6 +155,9 @@ export const useQuizResponse = (quiz: Quiz) => {
         console.error("Error saving answers:", answersError);
         throw answersError;
       }
+
+      // If there are group scores, save them too (would require a new table)
+      // We're just keeping them in memory for now
 
       toast.success(translations.quiz.responsesSaved);
     } catch (error) {

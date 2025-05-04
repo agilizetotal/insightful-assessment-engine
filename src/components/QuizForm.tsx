@@ -17,9 +17,11 @@ interface QuizFormProps {
   onComplete: (responses: QuizResponse[], userData: UserData) => void;
 }
 
-// Group questions based on conditions
-interface QuestionGroup {
+// Group questions based on conditions and question groups
+interface DisplayQuestionGroup {
   title?: string;
+  description?: string;
+  weight?: number;
   questions: Question[];
 }
 
@@ -27,7 +29,7 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(-1); // -1 represents user data form
   const [responses, setResponses] = useState<QuizResponse[]>([]);
   const [activeQuestions, setActiveQuestions] = useState<Question[]>([]);
-  const [questionGroups, setQuestionGroups] = useState<QuestionGroup[]>([]);
+  const [questionGroups, setQuestionGroups] = useState<DisplayQuestionGroup[]>([]);
   const [userData, setUserData] = useState<UserData>({
     name: '',
     email: '',
@@ -129,28 +131,54 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
       const filteredQuestions = (quiz?.questions || []).filter(evaluateConditionsWithLogic);
       setActiveQuestions(filteredQuestions);
       
-      // Organize questions into groups
-      const groups: QuestionGroup[] = [];
-      let currentGroup: QuestionGroup = { questions: [] };
+      // Organize questions into groups based on question groups defined in the quiz
+      const displayGroups: DisplayQuestionGroup[] = [];
       
-      filteredQuestions.forEach((question) => {
-        // For now, a simple grouping - each question with conditions starts a new group
-        if (question.conditions && question.conditions.length > 0 && currentGroup.questions.length > 0) {
-          groups.push(currentGroup);
-          currentGroup = { questions: [question] };
-        } else {
-          currentGroup.questions.push(question);
+      // First, create a map of group IDs to their details
+      const groupMap = new Map();
+      (quiz?.questionGroups || []).forEach(group => {
+        groupMap.set(group.id, {
+          title: group.title,
+          description: group.description,
+          weight: group.weight
+        });
+      });
+      
+      // Create a group for questions without a group
+      const ungroupedQuestions = filteredQuestions.filter(q => !q.groupId);
+      if (ungroupedQuestions.length > 0) {
+        displayGroups.push({
+          title: "Perguntas Gerais",
+          questions: ungroupedQuestions
+        });
+      }
+      
+      // Group questions by their groupId
+      const groupedQuestions = new Map<string, Question[]>();
+      
+      filteredQuestions.filter(q => q.groupId).forEach(question => {
+        if (!groupedQuestions.has(question.groupId!)) {
+          groupedQuestions.set(question.groupId!, []);
+        }
+        groupedQuestions.get(question.groupId!)?.push(question);
+      });
+      
+      // Add groups with their questions to displayGroups
+      groupedQuestions.forEach((questions, groupId) => {
+        const groupDetails = groupMap.get(groupId);
+        if (groupDetails && questions.length > 0) {
+          displayGroups.push({
+            title: groupDetails.title,
+            description: groupDetails.description,
+            weight: groupDetails.weight,
+            questions
+          });
         }
       });
       
-      // Add the last group if not empty
-      if (currentGroup.questions.length > 0) {
-        groups.push(currentGroup);
-      }
-      
-      setQuestionGroups(groups);
+      setQuestionGroups(displayGroups);
     }
-  }, [quiz?.questions, responses, currentQuestionIndex]);
+  }, [quiz?.questions, quiz?.questionGroups, responses, currentQuestionIndex]);
   
   const currentQuestion = currentQuestionIndex >= 0 && activeQuestions.length > 0 ? 
     activeQuestions[currentQuestionIndex < activeQuestions.length ? currentQuestionIndex : 0] : null;
@@ -301,15 +329,18 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
     group.questions.some(q => q.id === currentQuestion.id)
   );
   
+  // Find the group details
+  const currentGroup = currentGroupIndex > -1 ? questionGroups[currentGroupIndex] : null;
+  
   return (
     <div className="max-w-2xl mx-auto py-8">
       <div className="mb-6">
         <Progress value={progress} className="h-2" />
         <div className="flex justify-between text-sm text-gray-500 mt-1">
           <div>
-            {currentGroupIndex > -1 && (
+            {currentGroup && (
               <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs">
-                Grupo {currentGroupIndex + 1}
+                {currentGroup.title}
               </span>
             )}
           </div>
@@ -327,7 +358,17 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
           )}
         </CardHeader>
         
-        <CardContent>
+        <CardContent className="space-y-4">
+          {currentQuestion.imageUrl && (
+            <div className="mb-4 rounded-md overflow-hidden border">
+              <img 
+                src={currentQuestion.imageUrl} 
+                alt="Imagem da questão" 
+                className="w-full h-auto max-h-80 object-contain"
+              />
+            </div>
+          )}
+        
           {currentQuestion.type === 'multiple-choice' && (
             <RadioGroup
               onValueChange={(value) => 

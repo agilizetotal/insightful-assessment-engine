@@ -67,16 +67,35 @@ const EditQuiz = () => {
           };
         }
         
+        // Get conditions for this question
+        const { data: conditionsData, error: conditionsError } = await supabase
+          .from('question_conditions')
+          .select('*')
+          .eq('dependent_question_id', question.id);
+          
+        if (conditionsError) {
+          console.error(`Erro ao carregar condições para questão ${question.id}:`, conditionsError);
+        }
+        
         return {
           id: question.id,
           text: question.text,
           type: question.type as any,
           required: question.required,
+          imageUrl: question.image_url, // Add support for image URL
+          groupId: question.group_id, // Add support for group ID
           options: optionsData.map(opt => ({
             id: opt.id,
             text: opt.text,
             weight: opt.weight
-          }))
+          })),
+          conditions: conditionsData ? conditionsData.map(cond => ({
+            id: cond.id,
+            questionId: cond.question_id,
+            operator: cond.operator,
+            value: cond.value,
+            logical_operator: cond.logical_operator
+          })) : []
         };
       }));
       
@@ -90,12 +109,30 @@ const EditQuiz = () => {
         console.error("Erro ao carregar faixas de perfil:", rangesError);
       }
       
+      // Buscar grupos de perguntas para o quiz
+      const { data: groupsData, error: groupsError } = await supabase
+        .from('question_groups')
+        .select('*')
+        .eq('quiz_id', quizId)
+        .order('order_index', { ascending: true });
+        
+      if (groupsError) {
+        console.error("Erro ao carregar grupos de perguntas:", groupsError);
+      }
+      
       // Montar o objeto quiz completo
       const loadedQuiz: Quiz = {
         id: quizData.id,
         title: quizData.title,
         description: quizData.description || '',
         questions: questionsWithOptions,
+        questionGroups: groupsData ? groupsData.map(group => ({
+          id: group.id,
+          title: group.title,
+          description: group.description || '',
+          weight: group.weight || 1,
+          order: group.order_index || 0
+        })) : [],
         profileRanges: rangesData ? rangesData.map(range => ({
           min: range.min_score,
           max: range.max_score,

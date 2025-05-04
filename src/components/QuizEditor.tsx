@@ -7,6 +7,7 @@ import { translations } from "@/locales/pt-BR";
 import { GeneralSettings } from "./quiz-editor/GeneralSettings";
 import { ProfileRanges } from "./quiz-editor/ProfileRanges";
 import { QuestionsList } from "./quiz-editor/QuestionsList";
+import { QuestionGroups } from "./quiz-editor/QuestionGroups";
 import { useQuizEditor } from "@/hooks/useQuizEditor";
 
 interface QuizEditorProps {
@@ -22,6 +23,7 @@ const QuizEditor = ({ initialQuiz, onSave, onPreview, isNewQuiz = false }: QuizE
     setQuiz,
     isSaving,
     questions,
+    questionGroups,
     addQuestion,
     updateQuestion,
     removeQuestion,
@@ -33,6 +35,9 @@ const QuizEditor = ({ initialQuiz, onSave, onPreview, isNewQuiz = false }: QuizE
     addCondition,
     updateCondition,
     removeCondition,
+    addQuestionGroup,
+    updateQuestionGroup,
+    removeQuestionGroup,
     handleSave,
     handlePreview
   } = useQuizEditor(initialQuiz, onSave, onPreview);
@@ -57,6 +62,7 @@ const QuizEditor = ({ initialQuiz, onSave, onPreview, isNewQuiz = false }: QuizE
         <TabsList className="mb-4">
           <TabsTrigger value="general">{translations.quiz.general}</TabsTrigger>
           <TabsTrigger value="questions">{translations.quiz.questions}</TabsTrigger>
+          <TabsTrigger value="groups">Grupos de Perguntas</TabsTrigger>
           <TabsTrigger value="profiles">{translations.quiz.profiles}</TabsTrigger>
         </TabsList>
         
@@ -67,6 +73,7 @@ const QuizEditor = ({ initialQuiz, onSave, onPreview, isNewQuiz = false }: QuizE
         <TabsContent value="questions">
           <QuestionsList
             questions={questions}
+            questionGroups={questionGroups}
             onUpdateQuestion={updateQuestion}
             onRemoveQuestion={removeQuestion}
             onMoveQuestion={moveQuestion}
@@ -78,6 +85,15 @@ const QuizEditor = ({ initialQuiz, onSave, onPreview, isNewQuiz = false }: QuizE
             onAddCondition={addCondition}
             onUpdateCondition={updateCondition}
             onRemoveCondition={removeCondition}
+          />
+        </TabsContent>
+
+        <TabsContent value="groups">
+          <QuestionGroups 
+            questionGroups={questionGroups}
+            onAddGroup={addQuestionGroup}
+            onUpdateGroup={updateQuestionGroup}
+            onRemoveGroup={removeQuestionGroup}
           />
         </TabsContent>
         
