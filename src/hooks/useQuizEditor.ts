@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Quiz, Condition, QuestionGroup } from '@/types/quiz';
 import { useQuestions } from './useQuestions';
 import { useQuizSave } from './useQuizSave';
+import { toast } from 'sonner';
 
 export const useQuizEditor = (
   initialQuiz: Quiz,
@@ -34,13 +35,16 @@ export const useQuizEditor = (
   } = useQuestions(quiz, setQuiz);
 
   const addQuestionGroup = () => {
+    const newGroupId = crypto.randomUUID();
     const newGroup: QuestionGroup = {
-      id: crypto.randomUUID(),
+      id: newGroupId,
       title: `Grupo ${quiz.questionGroups.length + 1}`,
       description: '',
       weight: 1,
       order: quiz.questionGroups.length
     };
+    
+    console.log("Adding new question group:", newGroup);
     
     const updatedQuiz = {
       ...quiz,
@@ -48,10 +52,13 @@ export const useQuizEditor = (
     };
     
     setQuiz(updatedQuiz);
+    toast.success(`Grupo "${newGroup.title}" adicionado`);
   };
   
   const updateQuestionGroup = (index: number, updatedGroup: QuestionGroup) => {
     const updatedGroups = [...quiz.questionGroups];
+    console.log(`Updating group at index ${index}:`, updatedGroup);
+    
     updatedGroups[index] = updatedGroup;
     
     const updatedQuiz = {
@@ -64,10 +71,14 @@ export const useQuizEditor = (
   
   const removeQuestionGroup = (index: number) => {
     const groupId = quiz.questionGroups[index].id;
+    const groupTitle = quiz.questionGroups[index].title;
+    
+    console.log(`Removing group at index ${index} with ID ${groupId}`);
     
     // Remove group association from any questions
     const updatedQuestions = quiz.questions.map(q => {
       if (q.groupId === groupId) {
+        console.log(`Removing group association from question ${q.id}`);
         return {
           ...q,
           groupId: undefined
@@ -83,11 +94,14 @@ export const useQuizEditor = (
     };
     
     setQuiz(updatedQuiz);
+    toast.success(`Grupo "${groupTitle}" removido`);
   };
 
   const handleSave = async () => {
+    console.log("Saving quiz with question groups:", quiz.questionGroups);
     const updatedQuiz = await saveToSupabase(quiz);
     if (updatedQuiz) {
+      toast.success("Questionário salvo com sucesso!");
       onSave(updatedQuiz);
     }
   };

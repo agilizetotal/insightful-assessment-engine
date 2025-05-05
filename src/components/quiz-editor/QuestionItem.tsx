@@ -49,6 +49,10 @@ export const QuestionItem = ({
   onUpdateCondition,
   onRemoveCondition
 }: QuestionItemProps) => {
+  // Logging para debug
+  console.log(`QuestionItem ${questionIndex+1}: questionGroups:`, questionGroups);
+  console.log(`QuestionItem ${questionIndex+1}: groupId:`, question.groupId);
+
   return (
     <Card>
       <CardHeader className="pb-2">

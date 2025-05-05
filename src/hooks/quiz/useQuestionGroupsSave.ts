@@ -20,11 +20,17 @@ const checkQuestionGroupsTable = async (): Promise<boolean> => {
   }
 };
 
-export const saveQuestionGroups = async (quizId: string, groups: QuestionGroup[]) => {
-  if (!groups || groups.length === 0) return true;
-  
+export const saveQuestionGroups = async (quizId: string, groups: QuestionGroup[]): Promise<boolean> => {
   try {
+    // Se não houver grupos, considere como sucesso
+    if (!groups || groups.length === 0) {
+      console.log("No question groups to save.");
+      return true;
+    }
+    
     console.log("Saving question groups:", groups);
+    
+    // Verificar se a tabela existe
     const tableExists = await checkQuestionGroupsTable();
     if (!tableExists) {
       console.error("Question groups table doesn't exist yet");
@@ -61,9 +67,16 @@ export const saveQuestionGroups = async (quizId: string, groups: QuestionGroup[]
       }
     }
     
-    // Save groups using RPC
+    // Save groups using RPC one by one with verification
     for (const group of groups) {
       console.log("Upserting group:", group);
+      
+      // Garantir que todos os campos obrigatórios estejam presentes
+      if (!group.title) {
+        console.warn(`Group ${group.id} has no title, setting default title`);
+        group.title = `Grupo ${group.id.substring(0,4)}`;
+      }
+      
       const { error: upsertError } = await supabase.rpc(
         'upsert_question_group',
         {
@@ -90,8 +103,12 @@ export const saveQuestionGroups = async (quizId: string, groups: QuestionGroup[]
     
     if (verifyError) {
       console.error("Error verifying saved groups:", verifyError);
+      return false;
     } else {
-      console.log("Verified saved groups:", verifiedGroups);
+      console.log("Verified saved groups:", verifiedGroups?.length || 0);
+      if (verifiedGroups?.length !== groups.length) {
+        console.warn(`Expected ${groups.length} groups but found ${verifiedGroups?.length || 0}`);
+      }
     }
     
     console.log("Question groups saved successfully");
