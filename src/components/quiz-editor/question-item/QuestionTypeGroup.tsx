@@ -40,17 +40,17 @@ export const QuestionTypeGroup = ({
       <div className="space-y-2">
         <Label htmlFor="question-group">Grupo de Perguntas</Label>
         <Select 
-          value={question.groupId || ''} 
+          value={question.groupId || 'no-group'} 
           onValueChange={(value) => onUpdateQuestion({
             ...question, 
-            groupId: value || undefined
+            groupId: value === 'no-group' ? undefined : value
           })}
         >
           <SelectTrigger id="question-group">
             <SelectValue placeholder="Selecione um grupo" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Sem grupo</SelectItem>
+            <SelectItem value="no-group">Sem grupo</SelectItem>
             {questionGroups.map(group => (
               <SelectItem key={group.id} value={group.id}>{group.title}</SelectItem>
             ))}
