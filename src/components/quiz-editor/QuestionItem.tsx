@@ -1,19 +1,16 @@
 
-import { Question, Option, QuestionType, Condition, QuestionGroup } from '@/types/quiz';
+import { Question, Option, Condition, QuestionGroup } from '@/types/quiz';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { ArrowDown, ArrowUp, Copy, Image, Trash } from 'lucide-react';
 import { translations } from '@/locales/pt-BR';
 import { QuestionConditions } from './QuestionConditions';
 import { QuestionOptions } from './QuestionOptions';
-import { Input } from '@/components/ui/input';
-import { useState } from 'react';
-import { toast } from 'sonner';
+import { QuestionActions } from './question-item/QuestionActions';
+import { QuestionTypeGroup } from './question-item/QuestionTypeGroup';
+import { QuestionRequired } from './question-item/QuestionRequired';
+import { QuestionImage } from './question-item/QuestionImage';
 
 interface QuestionItemProps {
   question: Question;
@@ -52,60 +49,18 @@ export const QuestionItem = ({
   onUpdateCondition,
   onRemoveCondition
 }: QuestionItemProps) => {
-  const [showImageInput, setShowImageInput] = useState(!!question.imageUrl);
-  const [imageError, setImageError] = useState(false);
-
-  const handleImageChange = (url: string) => {
-    setImageError(false);
-    onUpdateQuestion({
-      ...question, 
-      imageUrl: url
-    });
-  };
-
-  const handleImageLoadError = () => {
-    setImageError(true);
-    toast.error("Não foi possível carregar a imagem. Verifique o URL.");
-  };
-
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex justify-between">
           <CardTitle className="text-lg">{translations.quiz.question} {questionIndex + 1}</CardTitle>
-          <div className="flex space-x-1">
-            <Button 
-              size="sm" 
-              variant="ghost" 
-              onClick={() => onMoveQuestion('up')}
-              disabled={isFirst}
-            >
-              <ArrowUp className="h-4 w-4" />
-            </Button>
-            <Button 
-              size="sm" 
-              variant="ghost" 
-              onClick={() => onMoveQuestion('down')}
-              disabled={isLast}
-            >
-              <ArrowDown className="h-4 w-4" />
-            </Button>
-            <Button 
-              size="sm" 
-              variant="ghost" 
-              onClick={onDuplicateQuestion}
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
-            <Button 
-              size="sm" 
-              variant="ghost" 
-              className="text-red-500 hover:text-red-700"
-              onClick={onRemoveQuestion}
-            >
-              <Trash className="h-4 w-4" />
-            </Button>
-          </div>
+          <QuestionActions 
+            isFirst={isFirst}
+            isLast={isLast}
+            onMoveQuestion={onMoveQuestion}
+            onDuplicateQuestion={onDuplicateQuestion}
+            onRemoveQuestion={onRemoveQuestion}
+          />
         </div>
       </CardHeader>
       <CardContent className="space-y-4 pt-0">
@@ -122,101 +77,24 @@ export const QuestionItem = ({
           />
         </div>
         
-        <div className="flex justify-between items-center">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setShowImageInput(!showImageInput)}
-            className="flex items-center gap-1"
-          >
-            <Image className="h-4 w-4" />
-            {showImageInput ? 'Remover imagem' : 'Adicionar imagem'}
-          </Button>
-        </div>
+        <QuestionImage 
+          imageUrl={question.imageUrl} 
+          onImageChange={(url) => onUpdateQuestion({
+            ...question, 
+            imageUrl: url
+          })}
+        />
         
-        {showImageInput && (
-          <div className="space-y-2">
-            <Label htmlFor={`question-image-${questionIndex}`}>URL da Imagem</Label>
-            <Input 
-              id={`question-image-${questionIndex}`} 
-              value={question.imageUrl || ''} 
-              onChange={(e) => handleImageChange(e.target.value)}
-              placeholder="https://exemplo.com/imagem.jpg"
-            />
-            {question.imageUrl && (
-              <div className="mt-2 border rounded-md overflow-hidden">
-                <img 
-                  src={question.imageUrl} 
-                  alt="Preview da imagem" 
-                  className="w-full h-auto max-h-48 object-contain"
-                  onError={handleImageLoadError}
-                  style={{ display: imageError ? 'none' : 'block' }}
-                />
-                {imageError && (
-                  <div className="p-4 text-center text-red-500">
-                    Erro ao carregar imagem. Verifique o URL.
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+        <QuestionTypeGroup 
+          question={question}
+          questionGroups={questionGroups}
+          onUpdateQuestion={onUpdateQuestion}
+        />
         
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor={`question-type-${questionIndex}`}>{translations.quiz.questionType}</Label>
-            <Select 
-              value={question.type} 
-              onValueChange={(value: QuestionType) => onUpdateQuestion({
-                ...question, 
-                type: value
-              })}
-            >
-              <SelectTrigger id={`question-type-${questionIndex}`}>
-                <SelectValue placeholder={translations.quiz.selectQuestionType} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="multiple-choice">{translations.quiz.multipleChoice}</SelectItem>
-                <SelectItem value="checkbox">{translations.quiz.checkboxes}</SelectItem>
-                <SelectItem value="open-ended">{translations.quiz.openEnded}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor={`question-group-${questionIndex}`}>Grupo de Perguntas</Label>
-            <Select 
-              value={question.groupId || ''} 
-              onValueChange={(value) => onUpdateQuestion({
-                ...question, 
-                groupId: value || undefined
-              })}
-            >
-              <SelectTrigger id={`question-group-${questionIndex}`}>
-                <SelectValue placeholder="Selecione um grupo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Sem grupo</SelectItem>
-                {questionGroups.map(group => (
-                  <SelectItem key={group.id} value={group.id}>{group.title}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        
-        <div className="flex items-center space-x-2 pt-2">
-          <Switch 
-            id={`required-${questionIndex}`} 
-            checked={question.required}
-            onCheckedChange={(checked) => onUpdateQuestion({
-              ...question, 
-              required: checked
-            })}
-          />
-          <Label htmlFor={`required-${questionIndex}`}>{translations.quiz.requiredQuestion}</Label>
-        </div>
+        <QuestionRequired 
+          question={question}
+          onUpdateQuestion={onUpdateQuestion}
+        />
         
         {question.type !== 'open-ended' && (
           <QuestionOptions
