@@ -115,6 +115,7 @@ const EditQuiz = () => {
       // Get question groups using RPC function
       let questionGroups = [];
       try {
+        console.log("Fetching question groups for quiz:", quizId);
         const { data: groupsData, error: groupsError } = await supabase.rpc(
           'get_question_groups_by_quiz', 
           { quiz_id_param: quizId }
@@ -124,6 +125,8 @@ const EditQuiz = () => {
           throw groupsError;
         }
         
+        console.log("Retrieved question groups:", groupsData);
+        
         questionGroups = groupsData ? groupsData.map((group: any) => ({
           id: group.id,
           title: group.title,
@@ -131,6 +134,8 @@ const EditQuiz = () => {
           weight: group.weight || 1,
           order: group.order_index || 0
         })) : [];
+        
+        console.log("Processed question groups:", questionGroups);
       } catch (error) {
         console.error("Erro ao carregar grupos de perguntas:", error);
         questionGroups = [];
@@ -152,6 +157,13 @@ const EditQuiz = () => {
         createdAt: quizData.created_at,
         updatedAt: quizData.updated_at
       };
+      
+      console.log("Loaded quiz with questions and groups:", {
+        questions: loadedQuiz.questions.length,
+        questionGroups: loadedQuiz.questionGroups.length,
+        questionGroups_details: loadedQuiz.questionGroups,
+        questionsWithGroups: loadedQuiz.questions.filter(q => q.groupId).length
+      });
       
       setQuiz(loadedQuiz);
     } catch (error) {

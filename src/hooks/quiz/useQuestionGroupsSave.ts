@@ -42,6 +42,7 @@ export const saveQuestionGroups = async (quizId: string, groups: QuestionGroup[]
       return false;
     }
     
+    console.log("Existing groups:", existingGroups);
     const existingGroupIds = existingGroups?.map((g: any) => g.id) || [];
     const newGroupIds = groups.map(g => g.id);
     
@@ -70,7 +71,7 @@ export const saveQuestionGroups = async (quizId: string, groups: QuestionGroup[]
           quiz_id_param: quizId,
           title_param: group.title,
           description_param: group.description || '',
-          weight_param: group.weight,
+          weight_param: group.weight || 1,
           order_index_param: group.order || 0
         }
       );
@@ -79,6 +80,18 @@ export const saveQuestionGroups = async (quizId: string, groups: QuestionGroup[]
         console.error(`Error upserting question group ${group.id}:`, upsertError);
         return false;
       }
+    }
+    
+    // Verify that groups were saved correctly by fetching them again
+    const { data: verifiedGroups, error: verifyError } = await supabase.rpc(
+      'get_question_groups_by_quiz',
+      { quiz_id_param: quizId }
+    );
+    
+    if (verifyError) {
+      console.error("Error verifying saved groups:", verifyError);
+    } else {
+      console.log("Verified saved groups:", verifiedGroups);
     }
     
     console.log("Question groups saved successfully");

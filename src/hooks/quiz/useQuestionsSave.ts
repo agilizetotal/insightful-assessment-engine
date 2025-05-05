@@ -6,6 +6,12 @@ import { saveQuestionConditions } from './useQuestionConditionsSave';
 
 export const saveQuestions = async (quizId: string, questions: Question[]) => {
   try {
+    console.log("Saving questions with groups:", questions.map(q => ({
+      id: q.id, 
+      text: q.text.substring(0, 20), 
+      groupId: q.groupId
+    })));
+    
     // Save questions one by one
     for (let i = 0; i < questions.length; i++) {
       const question = questions[i];
