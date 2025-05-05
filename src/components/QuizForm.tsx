@@ -35,10 +35,19 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
     );
   }
 
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(-1);
+  
+  // First get active questions before using them
+  const { activeQuestions, questionGroups } = useActiveQuestions(
+    quiz, 
+    responses, 
+    currentQuestionIndex
+  );
+  
+  // Then use activeQuestions in the navigation hook
   const { 
-    currentQuestionIndex, 
-    currentQuestion, 
     progress,
+    currentQuestion, 
     handleStartQuiz,
     handleNextQuestion,
     handlePreviousQuestion,
@@ -46,14 +55,10 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
   } = useQuizNavigation({
     activeQuestions,
     onComplete,
-    userData
+    userData,
+    currentQuestionIndex,
+    setCurrentQuestionIndex
   });
-
-  const { activeQuestions, questionGroups } = useActiveQuestions(
-    quiz, 
-    responses, 
-    currentQuestionIndex
-  );
   
   const handleResponseChange = (questionId: string, answer: string | string[]) => {
     const newResponses = [...responses];
@@ -104,7 +109,11 @@ const QuizForm: React.FC<QuizFormProps> = ({ quiz, onComplete }) => {
         progress={progress}
         currentQuestionIndex={currentQuestionIndex}
         totalQuestions={activeQuestions.length}
-        currentGroup={currentGroup}
+        currentGroup={currentGroup ? {
+          title: currentGroup.title || "Perguntas",  // Provide a default title if it's undefined
+          description: currentGroup.description,
+          weight: currentGroup.weight
+        } : null}
       />
       
       <QuestionCard

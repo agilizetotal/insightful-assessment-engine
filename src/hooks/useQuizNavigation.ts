@@ -1,20 +1,21 @@
 
-import { useState } from "react";
-import { Question, QuizResponse, UserData } from "@/types/quiz";
+import { UserData, Question, QuizResponse } from "@/types/quiz";
 
 interface UseQuizNavigationProps {
   activeQuestions: Question[];
   onComplete: (responses: QuizResponse[], userData: UserData) => void;
   userData: UserData;
+  currentQuestionIndex: number;
+  setCurrentQuestionIndex: (index: number) => void;
 }
 
 export const useQuizNavigation = ({
   activeQuestions,
   onComplete,
-  userData
+  userData,
+  currentQuestionIndex,
+  setCurrentQuestionIndex
 }: UseQuizNavigationProps) => {
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(-1); // -1 represents user data form
-  
   const progress = 
     currentQuestionIndex < 0 ? 0 :
     activeQuestions.length === 0 ? 100 :
