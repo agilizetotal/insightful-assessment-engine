@@ -37,39 +37,9 @@ export const saveQuestionGroups = async (quizId: string, groups: QuestionGroup[]
       return false;
     }
     
-    // Use RPC function to get existing groups
-    const { data: existingGroups, error: fetchError } = await supabase.rpc(
-      'get_question_groups_by_quiz',
-      { quiz_id_param: quizId }
-    );
-      
-    if (fetchError) {
-      console.error("Error fetching question groups:", fetchError);
-      return false;
-    }
-    
-    console.log("Existing groups:", existingGroups);
-    const existingGroupIds = existingGroups?.map((g: any) => g.id) || [];
-    const newGroupIds = groups.map(g => g.id);
-    
-    // Delete groups that are no longer present using RPC
-    const groupsToDelete = existingGroupIds.filter(id => !newGroupIds.includes(id));
-    if (groupsToDelete.length > 0) {
-      console.log("Deleting groups:", groupsToDelete);
-      const { error: deleteError } = await supabase.rpc(
-        'delete_question_groups', 
-        { group_ids: groupsToDelete }
-      );
-      
-      if (deleteError) {
-        console.error("Error deleting question groups:", deleteError);
-        return false;
-      }
-    }
-    
-    // Save groups using RPC one by one with verification
+    // Usar código mais simples e direto para salvar os grupos
     for (const group of groups) {
-      console.log("Upserting group:", group);
+      console.log("Saving group:", group);
       
       // Garantir que todos os campos obrigatórios estejam presentes
       if (!group.title) {
@@ -77,37 +47,49 @@ export const saveQuestionGroups = async (quizId: string, groups: QuestionGroup[]
         group.title = `Grupo ${group.id.substring(0,4)}`;
       }
       
-      const { error: upsertError } = await supabase.rpc(
-        'upsert_question_group',
-        {
-          group_id: group.id,
-          quiz_id_param: quizId,
-          title_param: group.title,
-          description_param: group.description || '',
-          weight_param: group.weight || 1,
-          order_index_param: group.order || 0
-        }
-      );
+      // Usar upsert diretamente na tabela em vez de RPC
+      const { error: upsertError } = await supabase
+        .from('question_groups')
+        .upsert({
+          id: group.id,
+          quiz_id: quizId,
+          title: group.title,
+          description: group.description || '',
+          weight: group.weight || 1,
+          order_index: group.order || 0
+        });
       
       if (upsertError) {
-        console.error(`Error upserting question group ${group.id}:`, upsertError);
+        console.error(`Error saving question group ${group.id}:`, upsertError);
         return false;
       }
     }
     
-    // Verify that groups were saved correctly by fetching them again
-    const { data: verifiedGroups, error: verifyError } = await supabase.rpc(
-      'get_question_groups_by_quiz',
-      { quiz_id_param: quizId }
-    );
+    // Excluir grupos que não estão mais presentes
+    // Primeiro, recupere todos os grupos existentes
+    const { data: existingGroups } = await supabase
+      .from('question_groups')
+      .select('id')
+      .eq('quiz_id', quizId);
     
-    if (verifyError) {
-      console.error("Error verifying saved groups:", verifyError);
-      return false;
-    } else {
-      console.log("Verified saved groups:", verifiedGroups?.length || 0);
-      if (verifiedGroups?.length !== groups.length) {
-        console.warn(`Expected ${groups.length} groups but found ${verifiedGroups?.length || 0}`);
+    if (existingGroups) {
+      const existingIds = existingGroups.map(g => g.id);
+      const currentIds = groups.map(g => g.id);
+      
+      // Identificar grupos para excluir
+      const idsToDelete = existingIds.filter(id => !currentIds.includes(id));
+      
+      if (idsToDelete.length > 0) {
+        console.log("Deleting groups:", idsToDelete);
+        const { error: deleteError } = await supabase
+          .from('question_groups')
+          .delete()
+          .in('id', idsToDelete);
+        
+        if (deleteError) {
+          console.error("Error deleting groups:", deleteError);
+          return false;
+        }
       }
     }
     

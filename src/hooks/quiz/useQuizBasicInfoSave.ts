@@ -3,6 +3,12 @@ import { Quiz } from '@/types/quiz';
 import { supabase } from '@/integrations/supabase/client';
 
 export const saveQuizBasicInfo = async (quiz: Quiz, userId: string) => {
+  if (!userId) {
+    throw new Error("User ID is required to save quiz basic info");
+  }
+  
+  console.log("Saving quiz basic info with user ID:", userId);
+  
   const { data: quizData, error: quizError } = await supabase
     .from('quizzes')
     .upsert({
@@ -16,8 +22,10 @@ export const saveQuizBasicInfo = async (quiz: Quiz, userId: string) => {
     .single();
   
   if (quizError) {
+    console.error("Error saving quiz basic info:", quizError);
     throw quizError;
   }
   
+  console.log("Quiz basic info saved successfully:", quizData);
   return quizData;
 };

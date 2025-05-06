@@ -1,40 +1,16 @@
 
 import { useState } from 'react';
 import { Quiz } from '@/types/quiz';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { saveQuestions } from './quiz/useQuestionsSave';
 import { saveProfileRanges } from './quiz/useProfileRangesSave';
 import { saveQuestionGroups } from './quiz/useQuestionGroupsSave';
+import { saveQuizBasicInfo } from './quiz/useQuizBasicInfoSave';
 
 export const useQuizSave = () => {
   const [isSaving, setIsSaving] = useState(false);
   const { user } = useAuth();
-
-  const saveQuizBasicInfo = async (quiz: Quiz) => {
-    if (!user) {
-      throw new Error("Authentication required");
-    }
-    
-    const { data: quizData, error: quizError } = await supabase
-      .from('quizzes')
-      .upsert({
-        id: quiz.id,
-        title: quiz.title,
-        description: quiz.description,
-        user_id: user.id,
-        updated_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-    
-    if (quizError) {
-      throw quizError;
-    }
-    
-    return quizData;
-  };
 
   const saveToSupabase = async (quiz: Quiz): Promise<Quiz | null> => {
     if (!user) {
@@ -47,7 +23,7 @@ export const useQuizSave = () => {
       console.log("Starting quiz save operation");
       
       // Step 1: Update or insert quiz basic info
-      await saveQuizBasicInfo(quiz);
+      await saveQuizBasicInfo(quiz, user.id);
       
       // Step 2: Save question groups first
       if (quiz.questionGroups && quiz.questionGroups.length > 0) {
@@ -55,7 +31,7 @@ export const useQuizSave = () => {
         const groupsSaved = await saveQuestionGroups(quiz.id, quiz.questionGroups);
         if (!groupsSaved) {
           console.error("Failed to save question groups");
-          throw new Error("Failed to save question groups");
+          throw new Error("Falha ao salvar grupos de perguntas");
         }
       }
       
@@ -64,7 +40,7 @@ export const useQuizSave = () => {
       const questionsSaved = await saveQuestions(quiz.id, quiz.questions);
       if (!questionsSaved) {
         console.error("Failed to save questions");
-        throw new Error("Failed to save questions");
+        throw new Error("Falha ao salvar perguntas");
       }
       
       // Step 4: Save profile ranges
@@ -83,7 +59,7 @@ export const useQuizSave = () => {
       return updatedQuiz;
     } catch (error) {
       console.error("Error saving quiz:", error);
-      toast.error("Erro ao salvar questionário");
+      toast.error(`Erro ao salvar questionário: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
       return null;
     } finally {
       setIsSaving(false);
