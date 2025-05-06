@@ -6,7 +6,8 @@ import { saveQuestionConditions } from './useQuestionConditionsSave';
 
 export const saveQuestions = async (quizId: string, questions: Question[]) => {
   try {
-    console.log("Saving questions with groups:", questions.map(q => ({
+    console.log(`Saving ${questions.length} questions for quiz ${quizId}`);
+    console.log("Questions with groups:", questions.map(q => ({
       id: q.id, 
       text: q.text.substring(0, 20), 
       groupId: q.groupId
@@ -16,26 +17,33 @@ export const saveQuestions = async (quizId: string, questions: Question[]) => {
     for (let i = 0; i < questions.length; i++) {
       const question = questions[i];
       
+      // Format data for upsert
+      const questionData = {
+        id: question.id,
+        quiz_id: quizId,
+        text: question.text,
+        type: question.type,
+        required: question.required,
+        order_index: i,
+        image_url: question.imageUrl,
+        group_id: question.groupId
+      };
+      
+      console.log(`Upserting question ${i} with data:`, questionData);
+      
       // Save questions
-      const { data: questionData, error: questionError } = await supabase
+      const { data: questionData_, error: questionError } = await supabase
         .from('questions')
-        .upsert({
-          id: question.id,
-          quiz_id: quizId,
-          text: question.text,
-          type: question.type,
-          required: question.required,
-          order_index: i,
-          image_url: question.imageUrl,
-          group_id: question.groupId
-        })
-        .select()
-        .single();
+        .upsert(questionData)
+        .select();
         
       if (questionError) {
         console.error(`Error saving question ${i}:`, questionError);
+        console.error(`Data that failed:`, questionData);
         continue;
       }
+      
+      console.log(`Question ${question.id} saved successfully`);
       
       // Save options and conditions
       await Promise.all([
@@ -56,12 +64,15 @@ export const saveQuestions = async (quizId: string, questions: Question[]) => {
     // Delete questions that are no longer present
     const questionsToDelete = existingQuestionIds.filter(id => !newQuestionIds.includes(id));
     if (questionsToDelete.length > 0) {
+      console.log(`Deleting ${questionsToDelete.length} questions that are no longer present`);
+      
       await supabase
         .from('questions')
         .delete()
         .in('id', questionsToDelete);
     }
     
+    console.log("All questions saved successfully");
     return true;
   } catch (error) {
     console.error("Error in saveQuestions:", error);

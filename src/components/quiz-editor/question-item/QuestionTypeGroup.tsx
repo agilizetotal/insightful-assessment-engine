@@ -16,15 +16,16 @@ export const QuestionTypeGroup = ({
   questionGroups,
   onUpdateQuestion
 }: QuestionTypeGroupProps) => {
-  // Local state to track the selected group
+  // Use local state to track selection and sync with question
   const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>(question.groupId);
   
-  // Ensure component reflects changes to question.groupId
+  // Update local state when question prop changes
   useEffect(() => {
+    console.log("QuestionTypeGroup - question.groupId changed:", question.groupId);
     setSelectedGroupId(question.groupId);
   }, [question.groupId]);
   
-  // Log available groups and current selection for debugging
+  // Debug logging
   useEffect(() => {
     console.log("QuestionTypeGroup - Available groups:", questionGroups);
     console.log("QuestionTypeGroup - Current question:", question.id);
@@ -41,14 +42,19 @@ export const QuestionTypeGroup = ({
   const handleGroupChange = (value: string) => {
     console.log("Group selection changed to:", value);
     
-    // Update local state
-    setSelectedGroupId(value === 'no-group' ? undefined : value);
+    const newGroupId = value === 'no-group' ? undefined : value;
     
-    // Update parent component
+    // Update local state
+    setSelectedGroupId(newGroupId);
+    
+    // Update parent component with full question object
     onUpdateQuestion({
       ...question,
-      groupId: value === 'no-group' ? undefined : value
+      groupId: newGroupId
     });
+    
+    // Extra logging to debug
+    console.log("Updated question with new groupId:", newGroupId);
   };
 
   return (

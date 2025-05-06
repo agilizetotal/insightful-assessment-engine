@@ -17,19 +17,16 @@ export const saveQuestionGroups = async (quizId: string, groups: QuestionGroup[]
       console.log(`Upserting group: ${group.id}, title: ${group.title}, order: ${group.order}`);
       
       // Format data for upsert
-      const data = {
-        id: group.id,
-        quiz_id: quizId,
-        title: group.title || `Grupo ${group.id.substring(0,4)}`,
-        description: group.description || '',
-        weight: group.weight || 1,
-        order_index: group.order
-      };
-      
-      // Perform upsert operation directly
       const { error } = await supabase
         .from('question_groups')
-        .upsert(data);
+        .upsert({
+          id: group.id,
+          quiz_id: quizId,
+          title: group.title || `Grupo ${group.id.substring(0,4)}`,
+          description: group.description || '',
+          weight: group.weight || 1,
+          order_index: group.order
+        });
       
       if (error) {
         console.error(`Error saving question group ${group.id}:`, error);

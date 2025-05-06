@@ -54,6 +54,7 @@ export const QuestionItem = ({
   useEffect(() => {
     console.log(`QuestionItem ${questionIndex+1}:`, {
       id: question.id,
+      text: question.text.substring(0, 20),
       groupId: question.groupId,
       availableGroups: questionGroups.map(g => ({ id: g.id, title: g.title }))
     });
