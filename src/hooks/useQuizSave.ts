@@ -21,13 +21,15 @@ export const useQuizSave = () => {
     setIsSaving(true);
     try {
       console.log("Starting quiz save operation");
+      console.log("User ID:", user.id);
+      console.log("Quiz data:", JSON.stringify(quiz, null, 2));
       
       // Step 1: Update or insert quiz basic info
       await saveQuizBasicInfo(quiz, user.id);
       
-      // Step 2: Save question groups first
+      // Step 2: Save question groups first (with debug logging)
       if (quiz.questionGroups && quiz.questionGroups.length > 0) {
-        console.log("Saving question groups:", quiz.questionGroups.length);
+        console.log("Saving question groups:", JSON.stringify(quiz.questionGroups, null, 2));
         const groupsSaved = await saveQuestionGroups(quiz.id, quiz.questionGroups);
         if (!groupsSaved) {
           console.error("Failed to save question groups");
@@ -36,7 +38,12 @@ export const useQuizSave = () => {
       }
       
       // Step 3: Save questions (and their options and conditions)
-      console.log("Saving questions:", quiz.questions.length);
+      console.log("Saving questions with groups:", quiz.questions.map(q => ({ 
+        id: q.id, 
+        text: q.text.substring(0, 20),
+        groupId: q.groupId
+      })));
+      
       const questionsSaved = await saveQuestions(quiz.id, quiz.questions);
       if (!questionsSaved) {
         console.error("Failed to save questions");

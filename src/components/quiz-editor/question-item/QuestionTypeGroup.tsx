@@ -3,6 +3,7 @@ import { Question, QuestionType, QuestionGroup } from '@/types/quiz';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { translations } from '@/locales/pt-BR';
+import { useEffect, useState } from 'react';
 
 interface QuestionTypeGroupProps {
   question: Question;
@@ -15,9 +16,40 @@ export const QuestionTypeGroup = ({
   questionGroups,
   onUpdateQuestion
 }: QuestionTypeGroupProps) => {
-  // Log para depuração dos grupos disponíveis
-  console.log("Grupos disponíveis para seleção:", questionGroups);
-  console.log("Grupo selecionado atual:", question.groupId);
+  // Local state to track the selected group
+  const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>(question.groupId);
+  
+  // Ensure component reflects changes to question.groupId
+  useEffect(() => {
+    setSelectedGroupId(question.groupId);
+  }, [question.groupId]);
+  
+  // Log available groups and current selection for debugging
+  useEffect(() => {
+    console.log("QuestionTypeGroup - Available groups:", questionGroups);
+    console.log("QuestionTypeGroup - Current question:", question.id);
+    console.log("QuestionTypeGroup - Selected group ID:", selectedGroupId);
+  }, [questionGroups, question.id, selectedGroupId]);
+
+  const handleTypeChange = (value: QuestionType) => {
+    onUpdateQuestion({
+      ...question,
+      type: value
+    });
+  };
+
+  const handleGroupChange = (value: string) => {
+    console.log("Group selection changed to:", value);
+    
+    // Update local state
+    setSelectedGroupId(value === 'no-group' ? undefined : value);
+    
+    // Update parent component
+    onUpdateQuestion({
+      ...question,
+      groupId: value === 'no-group' ? undefined : value
+    });
+  };
 
   return (
     <div className="grid grid-cols-2 gap-4">
@@ -25,10 +57,7 @@ export const QuestionTypeGroup = ({
         <Label htmlFor="question-type">{translations.quiz.questionType}</Label>
         <Select 
           value={question.type} 
-          onValueChange={(value: QuestionType) => onUpdateQuestion({
-            ...question, 
-            type: value
-          })}
+          onValueChange={handleTypeChange}
         >
           <SelectTrigger id="question-type">
             <SelectValue placeholder={translations.quiz.selectQuestionType} />
@@ -44,14 +73,9 @@ export const QuestionTypeGroup = ({
       <div className="space-y-2">
         <Label htmlFor="question-group">Grupo de Perguntas</Label>
         <Select 
-          value={question.groupId || 'no-group'} 
-          onValueChange={(value) => {
-            console.log("Grupo selecionado:", value);
-            onUpdateQuestion({
-              ...question, 
-              groupId: value === 'no-group' ? undefined : value
-            });
-          }}
+          value={selectedGroupId || 'no-group'} 
+          onValueChange={handleGroupChange}
+          defaultValue="no-group"
         >
           <SelectTrigger id="question-group" className="bg-white">
             <SelectValue placeholder="Selecione um grupo" />
@@ -59,7 +83,9 @@ export const QuestionTypeGroup = ({
           <SelectContent className="bg-white">
             <SelectItem value="no-group">Sem grupo</SelectItem>
             {questionGroups.map(group => (
-              <SelectItem key={group.id} value={group.id}>{group.title || `Grupo ${group.id.substring(0,4)}`}</SelectItem>
+              <SelectItem key={group.id} value={group.id}>
+                {group.title || `Grupo ${group.id.substring(0,4)}`}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>

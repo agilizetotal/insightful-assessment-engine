@@ -11,6 +11,7 @@ import { QuestionActions } from './question-item/QuestionActions';
 import { QuestionTypeGroup } from './question-item/QuestionTypeGroup';
 import { QuestionRequired } from './question-item/QuestionRequired';
 import { QuestionImage } from './question-item/QuestionImage';
+import { useEffect } from 'react';
 
 interface QuestionItemProps {
   question: Question;
@@ -49,9 +50,14 @@ export const QuestionItem = ({
   onUpdateCondition,
   onRemoveCondition
 }: QuestionItemProps) => {
-  // Logging para debug
-  console.log(`QuestionItem ${questionIndex+1}: questionGroups:`, questionGroups);
-  console.log(`QuestionItem ${questionIndex+1}: groupId:`, question.groupId);
+  // Log for debugging
+  useEffect(() => {
+    console.log(`QuestionItem ${questionIndex+1}:`, {
+      id: question.id,
+      groupId: question.groupId,
+      availableGroups: questionGroups.map(g => ({ id: g.id, title: g.title }))
+    });
+  }, [question, questionIndex, questionGroups]);
 
   return (
     <Card>
