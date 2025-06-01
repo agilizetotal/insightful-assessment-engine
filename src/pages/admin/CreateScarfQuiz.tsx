@@ -14,6 +14,7 @@ const CreateScarfQuiz = () => {
   const [isCreating, setIsCreating] = useState(false);
 
   const handleCreateScarfQuiz = async () => {
+    console.log("Starting SCARF quiz creation...");
     setIsCreating(true);
     
     try {
@@ -21,11 +22,20 @@ const CreateScarfQuiz = () => {
       console.log("Created SCARF quiz:", scarfQuiz);
       
       const savedQuiz = await saveToSupabase(scarfQuiz);
+      console.log("Save result:", savedQuiz);
       
       if (savedQuiz) {
+        console.log("Quiz saved successfully, redirecting to admin...");
         toast.success("Questionário SCARF criado com sucesso!");
-        // Redirecionar para o painel administrativo em vez de edit-quiz
-        navigate('/admin');
+        
+        // Usar setTimeout para garantir que o toast apareça antes do redirecionamento
+        setTimeout(() => {
+          console.log("Executing navigation to /admin");
+          navigate('/admin', { replace: true });
+        }, 1000);
+      } else {
+        console.error("Failed to save quiz - savedQuiz is null");
+        toast.error("Erro ao salvar questionário - tente novamente");
       }
     } catch (error) {
       console.error("Error creating SCARF quiz:", error);
@@ -36,7 +46,7 @@ const CreateScarfQuiz = () => {
   };
 
   const handlePreviewSample = () => {
-    // Criar um quiz temporário para preview
+    console.log("Creating sample quiz for preview...");
     const sampleQuiz = createScarfQuiz();
     
     // Salvar no localStorage temporariamente para preview
@@ -46,13 +56,18 @@ const CreateScarfQuiz = () => {
     window.open(`/quiz/preview`, '_blank');
   };
 
+  const handleBackToAdmin = () => {
+    console.log("Navigating back to admin...");
+    navigate('/admin', { replace: true });
+  };
+
   return (
     <div className="container mx-auto p-4 pt-16">
       <div className="max-w-3xl mx-auto">
         <div className="mb-8">
           <Button 
             variant="outline" 
-            onClick={() => navigate('/admin')}
+            onClick={handleBackToAdmin}
             className="mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
