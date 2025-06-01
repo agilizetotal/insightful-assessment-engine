@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Quiz, QuizResponse, QuizResult, UserData, GroupScore } from '@/types/quiz';
 import { supabase } from '@/integrations/supabase/client';
@@ -117,18 +118,20 @@ export const useQuizResponse = (quiz: Quiz) => {
     try {
       console.log("Saving quiz response...");
       console.log("Current user:", user ? "Logged in" : "Anonymous");
+      console.log("User data:", userData);
       
-      // Insert response - works for both authenticated and anonymous users
+      // Insert response with user data
       const { data: responseData, error: responseError } = await supabase
         .from('quiz_responses')
         .insert({
           quiz_id: quiz.id,
-          user_id: user?.id || null, // Will be null for anonymous users
+          user_id: user?.id || null,
           score: totalScore,
           profile: profileRange?.profile || translations.quiz.unknownProfile,
           is_premium: false,
-          user_email: userData.email, // Store email for all users
-          user_name: userData.name    // Store name for all users
+          user_email: userData.email,
+          user_name: userData.name,
+          user_phone: userData.phone || null
         })
         .select('id')
         .single();
@@ -155,9 +158,6 @@ export const useQuizResponse = (quiz: Quiz) => {
         console.error("Error saving answers:", answersError);
         throw answersError;
       }
-
-      // If there are group scores, save them too (would require a new table)
-      // We're just keeping them in memory for now
 
       toast.success(translations.quiz.responsesSaved);
     } catch (error) {
