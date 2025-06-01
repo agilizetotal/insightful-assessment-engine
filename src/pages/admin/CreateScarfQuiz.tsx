@@ -12,6 +12,7 @@ const CreateScarfQuiz = () => {
   const navigate = useNavigate();
   const { isSaving, saveToSupabase } = useQuizSave();
   const [isCreating, setIsCreating] = useState(false);
+  const [quizCreated, setQuizCreated] = useState(false);
 
   const handleCreateScarfQuiz = async () => {
     console.log("Starting SCARF quiz creation...");
@@ -25,14 +26,9 @@ const CreateScarfQuiz = () => {
       console.log("Save result:", savedQuiz);
       
       if (savedQuiz) {
-        console.log("Quiz saved successfully, redirecting to admin...");
+        console.log("Quiz saved successfully");
         toast.success("Questionário SCARF criado com sucesso!");
-        
-        // Usar setTimeout para garantir que o toast apareça antes do redirecionamento
-        setTimeout(() => {
-          console.log("Executing navigation to /admin");
-          navigate('/admin', { replace: true });
-        }, 1000);
+        setQuizCreated(true);
       } else {
         console.error("Failed to save quiz - savedQuiz is null");
         toast.error("Erro ao salvar questionário - tente novamente");
@@ -58,8 +54,36 @@ const CreateScarfQuiz = () => {
 
   const handleBackToAdmin = () => {
     console.log("Navigating back to admin...");
-    navigate('/admin', { replace: true });
+    navigate('/admin');
   };
+
+  if (quizCreated) {
+    return (
+      <div className="container mx-auto p-4 pt-16">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="mb-8">
+            <div className="text-green-600 text-6xl mb-4">✓</div>
+            <h1 className="text-3xl font-bold mb-4 text-green-600">Questionário SCARF Criado!</h1>
+            <p className="text-gray-600 mb-8">
+              O formulário completo de Fit de Liderança com Modelo SCARF foi criado com sucesso e está pronto para uso.
+            </p>
+          </div>
+          
+          <div className="flex gap-4 justify-center">
+            <Button onClick={handleBackToAdmin} size="lg">
+              <ArrowLeft className="h-5 w-5 mr-2" />
+              Voltar para Admin
+            </Button>
+            
+            <Button onClick={handlePreviewSample} variant="outline" size="lg">
+              <Play className="h-5 w-5 mr-2" />
+              Testar Questionário
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-4 pt-16">
@@ -74,45 +98,57 @@ const CreateScarfQuiz = () => {
             Voltar para Admin
           </Button>
           
-          <h1 className="text-3xl font-bold mb-2">Criar Questionário SCARF</h1>
+          <h1 className="text-3xl font-bold mb-2">Criar Questionário SCARF Completo</h1>
           <p className="text-gray-600">
-            Crie um questionário de avaliação SCARF de liderança completo com 85 perguntas organizadas em 4 blocos.
+            Formulário completo de Fit de Liderança com modelo SCARF usando escala de 6 pontos de compatibilidade.
           </p>
         </div>
 
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Sobre o Questionário SCARF</CardTitle>
+            <CardTitle>Sobre o Formulário SCARF</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <h3 className="font-semibold mb-2">Estrutura:</h3>
+                <h3 className="font-semibold mb-2">Estrutura (85 perguntas):</h3>
                 <ul className="text-sm space-y-1">
-                  <li>• <strong>Bloco 1:</strong> Diagnóstico Organizacional (10 perguntas)</li>
-                  <li>• <strong>Bloco 2:</strong> SCARF C-Level (25 perguntas, peso 2)</li>
-                  <li>• <strong>Bloco 3:</strong> SCARF Gestores (25 perguntas, peso 1)</li>
-                  <li>• <strong>Bloco 4:</strong> Perfil do Usuário (25 perguntas)</li>
+                  <li>• <strong>Bloco 1:</strong> Momento Estratégico (10 perguntas)</li>
+                  <li>• <strong>Bloco 2:</strong> SCARF C-Level (25 perguntas, peso 65%)</li>
+                  <li>• <strong>Bloco 3:</strong> SCARF Gestores (25 perguntas, peso 35%)</li>
+                  <li>• <strong>Bloco 4:</strong> Perfil Preferido (25 perguntas)</li>
                 </ul>
               </div>
               <div>
-                <h3 className="font-semibold mb-2">Dimensões SCARF:</h3>
+                <h3 className="font-semibold mb-2">Escala de Compatibilidade:</h3>
                 <ul className="text-sm space-y-1">
-                  <li>• <strong>Status:</strong> Senso de importância</li>
-                  <li>• <strong>Certainty:</strong> Clareza e previsibilidade</li>
-                  <li>• <strong>Autonomy:</strong> Controle e liberdade</li>
-                  <li>• <strong>Relatedness:</strong> Conexão social</li>
-                  <li>• <strong>Fairness:</strong> Senso de justiça</li>
+                  <li>• <strong>1:</strong> Nada compatível</li>
+                  <li>• <strong>2:</strong> Pouco compatível</li>
+                  <li>• <strong>3:</strong> Levemente compatível</li>
+                  <li>• <strong>4:</strong> Moderadamente compatível</li>
+                  <li>• <strong>5:</strong> Muito compatível</li>
+                  <li>• <strong>6:</strong> Totalmente compatível</li>
                 </ul>
               </div>
             </div>
             
             <div className="border-t pt-4">
-              <h3 className="font-semibold mb-2">Resultados:</h3>
+              <h3 className="font-semibold mb-2">Modelo de Cálculo:</h3>
               <ul className="text-sm space-y-1">
-                <li>• <strong>Score de Compatibilidade (FIT):</strong> 0-100%</li>
-                <li>• <strong>Faixas:</strong> Elevado (80-100%), Moderado (60-79%), Em Desenvolvimento (40-59%), Desafiador (0-39%)</li>
-                <li>• <strong>Perfil de Liderança:</strong> Baseado nas duas dimensões SCARF dominantes</li>
+                <li>• <strong>Média Ponderada:</strong> C-Level (65%) + Gestores (35%)</li>
+                <li>• <strong>Score SCARF:</strong> 100 - (Diferença ponderada / Diferença máxima) × 100</li>
+                <li>• <strong>Estilos de Liderança:</strong> Baseados nas correlações SCARF</li>
+              </ul>
+            </div>
+            
+            <div className="border-t pt-4">
+              <h3 className="font-semibold mb-2">Faixas de Resultado:</h3>
+              <ul className="text-sm space-y-1">
+                <li>• <strong>85-100%:</strong> Fit Excelente</li>
+                <li>• <strong>70-84%:</strong> Fit Elevado</li>
+                <li>• <strong>55-69%:</strong> Fit Moderado</li>
+                <li>• <strong>40-54%:</strong> Fit em Desenvolvimento</li>
+                <li>• <strong>0-39%:</strong> Fit Desafiador</li>
               </ul>
             </div>
           </CardContent>
@@ -141,10 +177,10 @@ const CreateScarfQuiz = () => {
         <div className="mt-8 p-4 bg-blue-50 rounded-lg">
           <h3 className="font-semibold text-blue-900 mb-2">Como funciona?</h3>
           <p className="text-blue-800 text-sm">
-            O questionário SCARF avalia a compatibilidade entre o perfil de liderança da organização 
-            (baseado nas respostas do C-Level e Gestores) e o perfil preferido do usuário. 
-            O cálculo considera pesos diferenciados: C-Level tem peso 2, Gestores peso 1. 
-            O resultado final é um score de compatibilidade e um perfil de liderança personalizado.
+            Este questionário avalia a compatibilidade entre o perfil de liderança organizacional 
+            (média ponderada: C-Level 65% + Gestores 35%) e suas preferências pessoais. 
+            O resultado final inclui um score de compatibilidade e um perfil de liderança baseado 
+            nas correlações SCARF específicas.
           </p>
         </div>
       </div>

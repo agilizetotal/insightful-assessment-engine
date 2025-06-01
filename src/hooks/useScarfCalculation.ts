@@ -20,7 +20,7 @@ interface ScarfResult {
 
 export const useScarfCalculation = () => {
   
-  const calculateDimensionScore = (responses: QuizResponse[], startIndex: number, weight: number = 1): ScarfDimensions => {
+  const calculateDimensionScore = (responses: QuizResponse[], startIndex: number, questionsPerDimension: number = 5): ScarfDimensions => {
     const dimensions = {
       status: 0,
       certainty: 0,
@@ -29,134 +29,124 @@ export const useScarfCalculation = () => {
       fairness: 0
     };
     
-    // Status: perguntas 0-4
-    for (let i = 0; i < 5; i++) {
-      const response = responses[startIndex + i];
-      if (response) {
-        dimensions.status += (parseInt(response.answer as string) || 3) * weight;
-      }
-    }
+    // Organizar perguntas por dimensão (5 perguntas cada)
+    const dimensionNames = ['status', 'certainty', 'autonomy', 'relatedness', 'fairness'];
     
-    // Certainty: perguntas 5-9
-    for (let i = 5; i < 10; i++) {
-      const response = responses[startIndex + i];
-      if (response) {
-        dimensions.certainty += (parseInt(response.answer as string) || 3) * weight;
+    dimensionNames.forEach((dimension, dimIndex) => {
+      let dimensionTotal = 0;
+      let dimensionCount = 0;
+      
+      for (let i = 0; i < questionsPerDimension; i++) {
+        const questionIndex = startIndex + (dimIndex * questionsPerDimension) + i;
+        const response = responses[questionIndex];
+        
+        if (response) {
+          // As opções agora vão de 1 a 6
+          const score = parseInt(response.answer as string) || 3;
+          dimensionTotal += score;
+          dimensionCount++;
+        }
       }
-    }
-    
-    // Autonomy: perguntas 10-14
-    for (let i = 10; i < 15; i++) {
-      const response = responses[startIndex + i];
-      if (response) {
-        dimensions.autonomy += (parseInt(response.answer as string) || 3) * weight;
+      
+      // Calcular média da dimensão
+      if (dimensionCount > 0) {
+        dimensions[dimension as keyof ScarfDimensions] = dimensionTotal / dimensionCount;
       }
-    }
-    
-    // Relatedness: perguntas 15-19
-    for (let i = 15; i < 20; i++) {
-      const response = responses[startIndex + i];
-      if (response) {
-        dimensions.relatedness += (parseInt(response.answer as string) || 3) * weight;
-      }
-    }
-    
-    // Fairness: perguntas 20-24
-    for (let i = 20; i < 25; i++) {
-      const response = responses[startIndex + i];
-      if (response) {
-        dimensions.fairness += (parseInt(response.answer as string) || 3) * weight;
-      }
-    }
+    });
     
     return dimensions;
   };
   
   const calculateOrganizationDimensions = (responses: QuizResponse[]): ScarfDimensions => {
-    // Calcular C-Level (peso 2) - perguntas 10-34
-    const clevelDimensions = calculateDimensionScore(responses, 10, 2);
+    // Calcular C-Level (perguntas 10-34, peso 65%)
+    const clevelDimensions = calculateDimensionScore(responses, 10);
     
-    // Calcular Gestores (peso 1) - perguntas 35-59
-    const managersDimensions = calculateDimensionScore(responses, 35, 1);
+    // Calcular Líderes/Gestores (perguntas 35-59, peso 35%)
+    const managersDimensions = calculateDimensionScore(responses, 35);
     
-    // Somar as dimensões
+    // Aplicar pesos conforme especificação: C-Level 65%, Gestores 35%
     return {
-      status: clevelDimensions.status + managersDimensions.status,
-      certainty: clevelDimensions.certainty + managersDimensions.certainty,
-      autonomy: clevelDimensions.autonomy + managersDimensions.autonomy,
-      relatedness: clevelDimensions.relatedness + managersDimensions.relatedness,
-      fairness: clevelDimensions.fairness + managersDimensions.fairness
+      status: (clevelDimensions.status * 0.65) + (managersDimensions.status * 0.35),
+      certainty: (clevelDimensions.certainty * 0.65) + (managersDimensions.certainty * 0.35),
+      autonomy: (clevelDimensions.autonomy * 0.65) + (managersDimensions.autonomy * 0.35),
+      relatedness: (clevelDimensions.relatedness * 0.65) + (managersDimensions.relatedness * 0.35),
+      fairness: (clevelDimensions.fairness * 0.65) + (managersDimensions.fairness * 0.35)
     };
   };
   
   const calculateUserDimensions = (responses: QuizResponse[]): ScarfDimensions => {
-    // Calcular perfil do usuário - perguntas 60-84
-    return calculateDimensionScore(responses, 60, 1);
+    // Calcular perfil do usuário (perguntas 60-84)
+    return calculateDimensionScore(responses, 60);
   };
   
   const calculateFitScore = (orgDimensions: ScarfDimensions, userDimensions: ScarfDimensions): number => {
-    const totalDifference = 
-      Math.abs(orgDimensions.status - userDimensions.status) +
-      Math.abs(orgDimensions.certainty - userDimensions.certainty) +
-      Math.abs(orgDimensions.autonomy - userDimensions.autonomy) +
-      Math.abs(orgDimensions.relatedness - userDimensions.relatedness) +
-      Math.abs(orgDimensions.fairness - userDimensions.fairness);
+    // Calcular diferença absoluta para cada dimensão
+    const differences = {
+      status: Math.abs(orgDimensions.status - userDimensions.status),
+      certainty: Math.abs(orgDimensions.certainty - userDimensions.certainty),
+      autonomy: Math.abs(orgDimensions.autonomy - userDimensions.autonomy),
+      relatedness: Math.abs(orgDimensions.relatedness - userDimensions.relatedness),
+      fairness: Math.abs(orgDimensions.fairness - userDimensions.fairness)
+    };
     
-    // Score FIT = 100 - ((diferença total / 125) * 100)
-    const fitScore = 100 - ((totalDifference / 125) * 100);
-    return Math.max(0, Math.min(100, fitScore)); // Garantir que fique entre 0-100
+    // Somar todas as diferenças
+    const totalDifference = Object.values(differences).reduce((sum, diff) => sum + diff, 0);
+    
+    // Diferença máxima possível: 5 dimensões × 5 pontos máximos = 25
+    const maxPossibleDifference = 25;
+    
+    // Score SCARF = 100 - (Diferença ponderada / Diferença máxima) * 100
+    const fitScore = 100 - ((totalDifference / maxPossibleDifference) * 100);
+    
+    return Math.max(0, Math.min(100, fitScore));
   };
   
   const determineFitRange = (fitScore: number): string => {
-    if (fitScore >= 80) return "Fit Elevado";
-    if (fitScore >= 60) return "Fit Moderado";
+    if (fitScore >= 85) return "Fit Excelente";
+    if (fitScore >= 70) return "Fit Elevado";
+    if (fitScore >= 55) return "Fit Moderado";
     if (fitScore >= 40) return "Fit em Desenvolvimento";
     return "Fit Desafiador";
   };
   
-  const determineLeadershipProfile = (userDimensions: ScarfDimensions, responses: QuizResponse[]): string => {
-    // Ordenar dimensões por pontuação
+  const determineLeadershipProfile = (userDimensions: ScarfDimensions): string => {
+    // Encontrar as duas dimensões mais altas
     const dimensionScores = [
-      { name: 'Status', score: userDimensions.status, priority: 1 },
-      { name: 'Certainty', score: userDimensions.certainty, priority: 2 },
-      { name: 'Autonomy', score: userDimensions.autonomy, priority: 3 },
-      { name: 'Relatedness', score: userDimensions.relatedness, priority: 4 },
-      { name: 'Fairness', score: userDimensions.fairness, priority: 5 }
+      { name: 'Status', score: userDimensions.status },
+      { name: 'Certainty', score: userDimensions.certainty },
+      { name: 'Autonomy', score: userDimensions.autonomy },
+      { name: 'Relatedness', score: userDimensions.relatedness },
+      { name: 'Fairness', score: userDimensions.fairness }
     ];
     
-    // Ordenar por pontuação (decrescente) e depois por prioridade (crescente)
-    dimensionScores.sort((a, b) => {
-      if (a.score !== b.score) {
-        return b.score - a.score; // Maior pontuação primeiro
-      }
-      return a.priority - b.priority; // Menor prioridade primeiro (desempate)
-    });
+    // Ordenar por pontuação decrescente
+    dimensionScores.sort((a, b) => b.score - a.score);
     
     const top1 = dimensionScores[0].name;
     const top2 = dimensionScores[1].name;
     
-    // Determinar perfil baseado nas duas dimensões principais
+    // Aplicar correlações específicas conforme modelo
     const combination = [top1, top2].sort().join(' + ');
     
     switch (combination) {
       case 'Certainty + Status':
         return 'Executivo/Tradicional';
+      case 'Autonomy + Relatedness':
+        return 'Colaborativo/Coach';
       case 'Autonomy + Certainty':
         return 'Visionário/Estratégico';
       case 'Autonomy + Status':
         return 'Transformacional/Disruptivo';
-      case 'Autonomy + Relatedness':
-        return 'Coach Colaborativo';
       case 'Fairness + Relatedness':
-        return 'Servidor/Ético';
+        return 'Liderança Servidora';
+      case 'Fairness + Status':
+        return 'Líder Justo/Ético';
       case 'Certainty + Relatedness':
         return 'Facilitador/Estável';
-      case 'Fairness + Status':
-        return 'Líder Justo/Respeitado';
       case 'Autonomy + Fairness':
         return 'Inovador/Íntegro';
       case 'Certainty + Fairness':
-        return 'Confiável/Sistemático';
+        return 'Sistemático/Confiável';
       case 'Relatedness + Status':
         return 'Influenciador/Carismático';
       default:
@@ -167,7 +157,7 @@ export const useScarfCalculation = () => {
   const calculateScarfResult = (quiz: Quiz, responses: QuizResponse[]): ScarfResult => {
     console.log("Calculating SCARF result with", responses.length, "responses");
     
-    // Calcular dimensões organizacionais (C-Level + Gestores)
+    // Calcular dimensões organizacionais (média ponderada C-Level + Gestores)
     const organizationDimensions = calculateOrganizationDimensions(responses);
     console.log("Organization dimensions:", organizationDimensions);
     
@@ -181,49 +171,49 @@ export const useScarfCalculation = () => {
     
     // Determinar faixa e perfil
     const fitRange = determineFitRange(fitScore);
-    const leadershipProfile = determineLeadershipProfile(userDimensions, responses);
+    const leadershipProfile = determineLeadershipProfile(userDimensions);
     
     // Criar group scores para visualização
     const groupScores: GroupScore[] = [
       {
         groupId: 'status',
         groupTitle: 'Status',
-        score: userDimensions.status,
-        maxScore: 25, // 5 perguntas * 5 pontos máximos
-        percentage: (userDimensions.status / 25) * 100
+        score: Math.round(userDimensions.status * 10) / 10,
+        maxScore: 6,
+        percentage: (userDimensions.status / 6) * 100
       },
       {
         groupId: 'certainty',
         groupTitle: 'Certainty',
-        score: userDimensions.certainty,
-        maxScore: 25,
-        percentage: (userDimensions.certainty / 25) * 100
+        score: Math.round(userDimensions.certainty * 10) / 10,
+        maxScore: 6,
+        percentage: (userDimensions.certainty / 6) * 100
       },
       {
         groupId: 'autonomy',
         groupTitle: 'Autonomy',
-        score: userDimensions.autonomy,
-        maxScore: 25,
-        percentage: (userDimensions.autonomy / 25) * 100
+        score: Math.round(userDimensions.autonomy * 10) / 10,
+        maxScore: 6,
+        percentage: (userDimensions.autonomy / 6) * 100
       },
       {
         groupId: 'relatedness',
         groupTitle: 'Relatedness',
-        score: userDimensions.relatedness,
-        maxScore: 25,
-        percentage: (userDimensions.relatedness / 25) * 100
+        score: Math.round(userDimensions.relatedness * 10) / 10,
+        maxScore: 6,
+        percentage: (userDimensions.relatedness / 6) * 100
       },
       {
         groupId: 'fairness',
         groupTitle: 'Fairness',
-        score: userDimensions.fairness,
-        maxScore: 25,
-        percentage: (userDimensions.fairness / 25) * 100
+        score: Math.round(userDimensions.fairness * 10) / 10,
+        maxScore: 6,
+        percentage: (userDimensions.fairness / 6) * 100
       }
     ];
     
     return {
-      fitScore,
+      fitScore: Math.round(fitScore),
       fitRange,
       leadershipProfile,
       userDimensions,
