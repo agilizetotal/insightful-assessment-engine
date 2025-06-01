@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Save, Play } from 'lucide-react';
+import { Save, Play, ArrowLeft } from 'lucide-react';
 import { createScarfQuiz } from '@/data/scarfQuiz';
 import { useQuizSave } from '@/hooks/useQuizSave';
 import { toast } from 'sonner';
@@ -24,7 +24,8 @@ const CreateScarfQuiz = () => {
       
       if (savedQuiz) {
         toast.success("Questionário SCARF criado com sucesso!");
-        navigate(`/admin/edit-quiz/${savedQuiz.id}`);
+        // Redirecionar para o painel administrativo em vez de edit-quiz
+        navigate('/admin');
       }
     } catch (error) {
       console.error("Error creating SCARF quiz:", error);
@@ -49,6 +50,15 @@ const CreateScarfQuiz = () => {
     <div className="container mx-auto p-4 pt-16">
       <div className="max-w-3xl mx-auto">
         <div className="mb-8">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/admin')}
+            className="mb-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar para Admin
+          </Button>
+          
           <h1 className="text-3xl font-bold mb-2">Criar Questionário SCARF</h1>
           <p className="text-gray-600">
             Crie um questionário de avaliação SCARF de liderança completo com 85 perguntas organizadas em 4 blocos.
