@@ -8,6 +8,7 @@ import ResultsChart from "./ResultsChart";
 import ProfileCard from "./results/ProfileCard";
 import ScoreCard from "./results/ScoreCard";
 import PremiumUpgradeCard from "./results/PremiumUpgradeCard";
+import ScarfResultsDisplay from "./results/ScarfResultsDisplay";
 import { 
   calculateCategoryScores, 
   calculateResponseDistribution,
@@ -44,6 +45,32 @@ const ResultsSummary: React.FC<ResultsSummaryProps> = ({
     );
   }
   
+  // Verificar se é um quiz SCARF
+  const isScarfQuiz = quiz.title.toLowerCase().includes('scarf');
+  
+  if (isScarfQuiz) {
+    return (
+      <div className="container mx-auto p-4 max-w-4xl">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold mb-2">Resultados da Avaliação SCARF</h1>
+          <p className="text-gray-500">
+            Análise de Compatibilidade de Liderança - {new Date(result.completedAt || new Date()).toLocaleDateString('pt-BR')}
+          </p>
+        </div>
+        
+        <ScarfResultsDisplay quiz={quiz} result={result} />
+        
+        {/* Premium Upgrade Card */}
+        {!result.isPremium && onUpgrade && (
+          <div className="mt-8">
+            <PremiumUpgradeCard onUpgrade={onUpgrade} />
+          </div>
+        )}
+      </div>
+    );
+  }
+  
+  // Render padrão para outros tipos de quiz
   // Find the profile range for this result
   const profileRange = quiz.profileRanges?.find(range => 
     result.score >= range.min && result.score <= range.max
