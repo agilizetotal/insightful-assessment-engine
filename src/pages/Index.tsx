@@ -11,12 +11,24 @@ const Index = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   
+  console.log("Index component - user:", user, "loading:", loading);
+  
   useEffect(() => {
     // Se não estiver carregando e o usuário não estiver logado, redirecionar para a página de login
     if (!loading && !user) {
+      console.log("Redirecting to auth page");
       navigate("/auth");
     }
   }, [loading, user, navigate]);
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex items-center justify-center">
+        <div className="text-xl">Carregando...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white">
@@ -59,7 +71,7 @@ const Index = () => {
             description={translations.index.adminPanelDescription}
             icon={<Home className="h-10 w-10 text-quiz-accent" />}
             link="/admin"
-            className={`md:col-span-2 lg:col-span-${user ? 2 : 1}`}
+            className={user ? "md:col-span-2 lg:col-span-2" : "md:col-span-2 lg:col-span-1"}
           />
           
           <FeatureCard 
@@ -89,7 +101,15 @@ const Index = () => {
   );
 };
 
-const FeatureCard = ({ title, description, icon, link, className = "" }) => {
+interface FeatureCardProps {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  link: string;
+  className?: string;
+}
+
+const FeatureCard: React.FC<FeatureCardProps> = ({ title, description, icon, link, className = "" }) => {
   return (
     <Card className={`hover:shadow-lg transition-shadow ${className}`}>
       <CardHeader>

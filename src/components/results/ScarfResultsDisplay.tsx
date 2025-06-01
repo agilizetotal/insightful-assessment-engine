@@ -9,12 +9,29 @@ interface ScarfResultsDisplayProps {
 }
 
 export const ScarfResultsDisplay = ({ quiz, result }: ScarfResultsDisplayProps) => {
-  // Extrair informações do perfil
-  const [leadershipProfile, fitRange] = result.profile.includes('(') 
+  console.log("ScarfResultsDisplay - quiz:", quiz);
+  console.log("ScarfResultsDisplay - result:", result);
+
+  // Safety checks
+  if (!quiz || !result) {
+    console.error("Missing quiz or result data");
+    return (
+      <div className="p-4 text-center">
+        <p>Erro: Dados do quiz ou resultado não encontrados.</p>
+      </div>
+    );
+  }
+
+  // Extrair informações do perfil com verificações de segurança
+  const profileParts = result.profile?.includes('(') 
     ? result.profile.split(' (')
-    : [result.profile, ''];
+    : [result.profile || 'Perfil não definido', ''];
   
-  const cleanFitRange = fitRange.replace(')', '');
+  const leadershipProfile = profileParts[0] || 'Perfil não definido';
+  const fitRange = profileParts[1]?.replace(')', '') || '';
+  
+  // Verificar se o score existe
+  const score = typeof result.score === 'number' ? result.score : 0;
   
   // Determinar cor baseada no FIT score
   const getFitColor = (score: number) => {
@@ -34,15 +51,15 @@ export const ScarfResultsDisplay = ({ quiz, result }: ScarfResultsDisplayProps) 
   return (
     <div className="space-y-6">
       {/* Score Principal */}
-      <Card className={`border-2 ${getFitColor(result.score)}`}>
+      <Card className={`border-2 ${getFitColor(score)}`}>
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Score de Compatibilidade (FIT)</CardTitle>
         </CardHeader>
         <CardContent className="text-center space-y-4">
-          <div className="text-6xl font-bold">{result.score}%</div>
-          <div className="text-xl font-semibold">{cleanFitRange}</div>
-          <Progress value={result.score} className="w-full h-3" />
-          <p className="text-sm mt-4">{getFitDescription(result.score)}</p>
+          <div className="text-6xl font-bold">{score}%</div>
+          {fitRange && <div className="text-xl font-semibold">{fitRange}</div>}
+          <Progress value={score} className="w-full h-3" />
+          <p className="text-sm mt-4">{getFitDescription(score)}</p>
         </CardContent>
       </Card>
 
@@ -63,29 +80,31 @@ export const ScarfResultsDisplay = ({ quiz, result }: ScarfResultsDisplayProps) 
       </Card>
 
       {/* Dimensões SCARF */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Suas Dimensões SCARF</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {result.groupScores?.map((group) => (
-              <div key={group.groupId}>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-medium">{group.groupTitle}</span>
-                  <span className="text-sm text-gray-500">
-                    {group.score}/{group.maxScore} ({Math.round(group.percentage)}%)
-                  </span>
+      {result.groupScores && result.groupScores.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Suas Dimensões SCARF</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {result.groupScores.map((group) => (
+                <div key={group.groupId}>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium">{group.groupTitle}</span>
+                    <span className="text-sm text-gray-500">
+                      {group.score}/{group.maxScore} ({Math.round(group.percentage)}%)
+                    </span>
+                  </div>
+                  <Progress value={group.percentage} className="h-2" />
+                  <p className="text-xs text-gray-500 mt-1">
+                    {getDimensionDescription(group.groupTitle)}
+                  </p>
                 </div>
-                <Progress value={group.percentage} className="h-2" />
-                <p className="text-xs text-gray-500 mt-1">
-                  {getDimensionDescription(group.groupTitle)}
-                </p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Recomendações */}
       <Card>
@@ -94,7 +113,7 @@ export const ScarfResultsDisplay = ({ quiz, result }: ScarfResultsDisplayProps) 
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {getRecommendations(result.score, result.groupScores || []).map((rec, index) => (
+            {getRecommendations(score, result.groupScores || []).map((rec, index) => (
               <div key={index} className="flex items-start space-x-2">
                 <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
                 <p className="text-sm">{rec}</p>
@@ -138,27 +157,34 @@ const getRecommendations = (fitScore: number, groupScores: any[]) => {
   }
   
   // Recomendações baseadas nas dimensões mais baixas
-  const sortedDimensions = [...groupScores].sort((a, b) => a.percentage - b.percentage);
-  const lowestDimension = sortedDimensions[0];
-  
-  if (lowestDimension && lowestDimension.percentage < 60) {
-    switch (lowestDimension.groupTitle) {
-      case 'Status':
-        recommendations.push('Trabalhe no desenvolvimento da sua confiança e presença de liderança');
-        break;
-      case 'Certainty':
-        recommendations.push('Pratique a comunicação clara e o planejamento estratégico');
-        break;
-      case 'Autonomy':
-        recommendations.push('Desenvolva habilidades de delegação e empowerment de equipes');
-        break;
-      case 'Relatedness':
-        recommendations.push('Invista no desenvolvimento de relacionamentos e habilidades interpessoais');
-        break;
-      case 'Fairness':
-        recommendations.push('Aprimore processos de tomada de decisão transparente e inclusiva');
-        break;
+  if (groupScores && groupScores.length > 0) {
+    const sortedDimensions = [...groupScores].sort((a, b) => a.percentage - b.percentage);
+    const lowestDimension = sortedDimensions[0];
+    
+    if (lowestDimension && lowestDimension.percentage < 60) {
+      switch (lowestDimension.groupTitle) {
+        case 'Status':
+          recommendations.push('Trabalhe no desenvolvimento da sua confiança e presença de liderança');
+          break;
+        case 'Certainty':
+          recommendations.push('Pratique a comunicação clara e o planejamento estratégico');
+          break;
+        case 'Autonomy':
+          recommendations.push('Desenvolva habilidades de delegação e empowerment de equipes');
+          break;
+        case 'Relatedness':
+          recommendations.push('Invista no desenvolvimento de relacionamentos e habilidades interpessoais');
+          break;
+        case 'Fairness':
+          recommendations.push('Aprimore processos de tomada de decisão transparente e inclusiva');
+          break;
+      }
     }
+  }
+  
+  // Always provide at least one recommendation
+  if (recommendations.length === 0) {
+    recommendations.push('Continue desenvolvendo suas habilidades de liderança com foco no autoconhecimento');
   }
   
   return recommendations;
