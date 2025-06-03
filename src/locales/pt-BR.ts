@@ -1,4 +1,5 @@
 
+
 export const translations = {
   common: {
     loading: "Carregando...",
@@ -17,7 +18,18 @@ export const translations = {
     preview: "Visualizar",
     saving: "Salvando...",
     backToHome: "Voltar ao Início",
-    saveQuiz: "Salvar Questionário"
+    saveQuiz: "Salvar Questionário",
+    complete: "Concluir",
+    dashboard: "Painel",
+    createNew: "Criar Novo"
+  },
+  auth: {
+    signOut: "Sair",
+    signIn: "Entrar",
+    signUp: "Cadastrar",
+    email: "Email",
+    password: "Senha",
+    forgotPassword: "Esqueci a senha"
   },
   index: {
     title: "Plataforma de Questionários Inteligentes",
@@ -90,6 +102,18 @@ export const translations = {
     and: "E",
     or: "OU",
     firstQuestionNoConditions: "A primeira pergunta não pode ter condições, pois não há perguntas anteriores.",
-    noConditionsYet: "Nenhuma condição foi adicionada ainda. Use o botão acima para adicionar uma condição."
+    noConditionsYet: "Nenhuma condição foi adicionada ainda. Use o botão acima para adicionar uma condição.",
+    requiredQuestion: "Pergunta obrigatória",
+    questionType: "Tipo de pergunta",
+    selectQuestionType: "Selecione o tipo de pergunta",
+    multipleChoice: "Múltipla escolha",
+    checkboxes: "Caixas de seleção",
+    openEnded: "Resposta aberta",
+    invalidQuizId: "ID do questionário inválido",
+    loadError: "Erro ao carregar questionário",
+    unknownProfile: "Perfil desconhecido",
+    responsesSaved: "Respostas salvas com sucesso",
+    savingError: "Erro ao salvar respostas"
   }
 };
+
