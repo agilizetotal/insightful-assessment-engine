@@ -50,7 +50,7 @@ export function Navigation() {
           <Button asChild variant="outline" size="sm">
             <Link to="/admin/create-new">
               <Plus className="h-4 w-4 mr-2" />
-              {translations.quiz.createNew}
+              {translations.common.createNew}
             </Link>
           </Button>
         )}
