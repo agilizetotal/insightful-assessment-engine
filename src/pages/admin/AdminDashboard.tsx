@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { QuizList } from "@/components/QuizList";
 import { useAuth } from "@/contexts/AuthContext";
 import { translations } from "@/locales/pt-BR";
@@ -14,13 +14,39 @@ const AdminDashboard = () => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [userName, setUserName] = useState("");
+  const [recentResponses, setRecentResponses] = useState([]);
 
   useEffect(() => {
     if (user) {
       setUserName(user.email || "");
+      loadRecentResponses();
       setIsLoading(false);
     }
   }, [user]);
+
+  const loadRecentResponses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('quiz_responses')
+        .select(`
+          id,
+          quiz_id,
+          created_at,
+          profile,
+          user_name,
+          quizzes!inner(title, user_id)
+        `)
+        .eq('quizzes.user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      
+      setRecentResponses(data || []);
+    } catch (error) {
+      console.error("Error loading recent responses:", error);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -46,7 +72,7 @@ const AdminDashboard = () => {
         <Button asChild>
           <Link to="/admin/create-new">
             <Plus className="h-5 w-5 mr-2" />
-            {translations.dashboard.createNew}
+            {translations.dashboard.createNewQuiz}
           </Link>
         </Button>
       </div>
@@ -69,9 +95,25 @@ const AdminDashboard = () => {
               <CardDescription>Últimas respostas recebidas nos seus questionários</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                {translations.dashboard.noQuizzes}
-              </div>
+              {recentResponses.length > 0 ? (
+                <div className="space-y-4">
+                  {recentResponses.map((response: any) => (
+                    <div key={response.id} className="p-4 border rounded-lg">
+                      <h4 className="font-medium">{response.quizzes?.title}</h4>
+                      <p className="text-sm text-gray-600">
+                        Respondido por: {response.user_name || 'Anônimo'}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {new Date(response.created_at).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  {translations.dashboard.noQuizzes}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

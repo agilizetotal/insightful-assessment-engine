@@ -24,13 +24,13 @@ export const saveQuestionConditions = async (questionId: string, conditions: Con
         .in('id', conditionsToDelete);
     }
     
-    // Save conditions
+    // Save conditions - ensure value is always string
     const conditionsToUpsert = conditions.map((condition) => ({
       id: condition.id,
       dependent_question_id: questionId,
       question_id: condition.questionId,
       operator: condition.operator,
-      value: condition.value,
+      value: String(condition.value), // Convert to string to match database type
       logical_operator: condition.logical_operator
     }));
     

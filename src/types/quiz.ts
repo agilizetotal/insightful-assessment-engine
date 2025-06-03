@@ -8,13 +8,13 @@ export interface Option {
 }
 
 export interface Condition {
+  id?: string;
   questionId: string;
   operator: 'equals' | 'not-equals' | 'greater-than' | 'less-than' | 'contains';
   value: string;
   logical_operator?: 'AND' | 'OR';
   created_at?: string;
   dependent_question_id?: string;
-  id?: string;
   question_id?: string;
 }
 
