@@ -3,58 +3,81 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Save, Play, ArrowLeft } from 'lucide-react';
+import { Save, Play, ArrowLeft, AlertCircle } from 'lucide-react';
 import { createScarfQuiz } from '@/data/scarfQuiz';
 import { useQuizSave } from '@/hooks/useQuizSave';
 import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const CreateScarfQuiz = () => {
   const navigate = useNavigate();
   const { isSaving, saveToSupabase } = useQuizSave();
   const [isCreating, setIsCreating] = useState(false);
   const [quizCreated, setQuizCreated] = useState(false);
+  const [creationProgress, setCreationProgress] = useState('');
+  const [createdQuizId, setCreatedQuizId] = useState<string | null>(null);
 
   const handleCreateScarfQuiz = async () => {
-    console.log("Starting SCARF quiz creation...");
+    console.log("=== STARTING SCARF QUIZ CREATION PROCESS ===");
     setIsCreating(true);
+    setCreationProgress('Gerando estrutura do questionário...');
     
     try {
+      // Step 1: Create the quiz structure
       const scarfQuiz = createScarfQuiz();
-      console.log("Created SCARF quiz:", scarfQuiz);
+      console.log("Quiz structure created:", {
+        id: scarfQuiz.id,
+        questionsCount: scarfQuiz.questions.length,
+        groupsCount: scarfQuiz.questionGroups.length
+      });
       
+      setCreationProgress(`Salvando ${scarfQuiz.questions.length} perguntas no banco de dados...`);
+      
+      // Step 2: Save to database
       const savedQuiz = await saveToSupabase(scarfQuiz);
-      console.log("Save result:", savedQuiz);
       
       if (savedQuiz) {
-        console.log("Quiz saved successfully");
-        toast.success("Questionário SCARF criado com sucesso!");
+        console.log("Quiz saved successfully with ID:", savedQuiz.id);
+        setCreatedQuizId(savedQuiz.id);
+        toast.success(`Questionário SCARF criado com sucesso! ${scarfQuiz.questions.length} perguntas salvas.`);
         setQuizCreated(true);
+        setCreationProgress('');
       } else {
         console.error("Failed to save quiz - savedQuiz is null");
         toast.error("Erro ao salvar questionário - tente novamente");
+        setCreationProgress('');
       }
     } catch (error) {
       console.error("Error creating SCARF quiz:", error);
-      toast.error("Erro ao criar questionário SCARF");
+      toast.error(`Erro ao criar questionário SCARF: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      setCreationProgress('');
     } finally {
       setIsCreating(false);
     }
   };
 
   const handlePreviewSample = () => {
-    console.log("Creating sample quiz for preview...");
-    const sampleQuiz = createScarfQuiz();
-    
-    // Salvar no localStorage temporariamente para preview
-    localStorage.setItem('preview-quiz', JSON.stringify(sampleQuiz));
-    
-    // Abrir em nova aba para preview
-    window.open(`/quiz/preview`, '_blank');
+    if (createdQuizId) {
+      // Open the actual quiz for preview
+      window.open(`/quiz/${createdQuizId}?preview=true`, '_blank');
+    } else {
+      // Fallback to sample quiz
+      console.log("Creating sample quiz for preview...");
+      const sampleQuiz = createScarfQuiz();
+      localStorage.setItem('preview-quiz', JSON.stringify(sampleQuiz));
+      window.open(`/quiz/preview`, '_blank');
+    }
   };
 
   const handleBackToAdmin = () => {
     console.log("Navigating back to admin...");
     navigate('/admin');
+  };
+
+  const handleEditQuiz = () => {
+    if (createdQuizId) {
+      navigate(`/admin/edit/${createdQuizId}`);
+    }
   };
 
   if (quizCreated) {
@@ -64,16 +87,33 @@ const CreateScarfQuiz = () => {
           <div className="mb-8">
             <div className="text-green-600 text-6xl mb-4">✓</div>
             <h1 className="text-3xl font-bold mb-4 text-green-600">Questionário SCARF Criado!</h1>
-            <p className="text-gray-600 mb-8">
+            <p className="text-gray-600 mb-4">
               O formulário completo de Fit de Liderança com Modelo SCARF foi criado com sucesso e está pronto para uso.
             </p>
+            
+            {createdQuizId && (
+              <Alert className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>ID do Quiz:</strong> {createdQuizId}
+                  <br />
+                  Todas as 85 perguntas foram salvas corretamente no banco de dados.
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
           
-          <div className="flex gap-4 justify-center">
+          <div className="flex gap-4 justify-center flex-wrap">
             <Button onClick={handleBackToAdmin} size="lg">
               <ArrowLeft className="h-5 w-5 mr-2" />
               Voltar para Admin
             </Button>
+            
+            {createdQuizId && (
+              <Button onClick={handleEditQuiz} variant="outline" size="lg">
+                Editar Questionário
+              </Button>
+            )}
             
             <Button onClick={handlePreviewSample} variant="outline" size="lg">
               <Play className="h-5 w-5 mr-2" />
@@ -93,6 +133,7 @@ const CreateScarfQuiz = () => {
             variant="outline" 
             onClick={handleBackToAdmin}
             className="mb-4"
+            disabled={isCreating}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar para Admin
@@ -103,6 +144,15 @@ const CreateScarfQuiz = () => {
             Formulário completo de Fit de Liderança com modelo SCARF usando escala de 6 pontos de compatibilidade.
           </p>
         </div>
+
+        {creationProgress && (
+          <Alert className="mb-6">
+            <AlertCircle className="h-4 w-4 animate-spin" />
+            <AlertDescription>
+              {creationProgress}
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Card className="mb-6">
           <CardHeader>
@@ -159,6 +209,7 @@ const CreateScarfQuiz = () => {
             onClick={handlePreviewSample}
             variant="outline"
             size="lg"
+            disabled={isCreating}
           >
             <Play className="h-5 w-5 mr-2" />
             Visualizar Exemplo

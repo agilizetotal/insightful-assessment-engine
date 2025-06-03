@@ -63,121 +63,144 @@ const createScarfOptions = () => [
   { id: crypto.randomUUID(), text: "Totalmente compatível", weight: 6 }
 ];
 
-const createQuestions = (): Question[] => {
+const createQuestions = (groupIds: string[]): Question[] => {
   const questions: Question[] = [];
   
+  console.log("=== CREATING SCARF QUESTIONS ===");
+  console.log("Group IDs received:", groupIds);
+  
   // Bloco 1: Momento Estratégico (10 perguntas)
+  console.log("Creating Strategic Moment questions...");
   strategicMomentQuestions.forEach((text, index) => {
-    questions.push({
+    const question: Question = {
       id: crypto.randomUUID(),
       text,
       type: 'multiple-choice',
       options: createScarfOptions(),
       required: true,
-      groupId: 'strategic-group'
-    });
+      groupId: groupIds[0] // strategic-group
+    };
+    questions.push(question);
+    console.log(`Strategic question ${index + 1}:`, text.substring(0, 30));
   });
   
   // Bloco 2: SCARF C-Level (25 perguntas)
+  console.log("Creating C-Level SCARF questions...");
   Object.entries(scarfQuestionsByDimension).forEach(([dimension, dimensionQuestions]) => {
-    dimensionQuestions.forEach((text) => {
-      questions.push({
+    dimensionQuestions.forEach((text, index) => {
+      const question: Question = {
         id: crypto.randomUUID(),
         text: `[C-Level] ${text}`,
         type: 'multiple-choice',
         options: createScarfOptions(),
         required: true,
-        groupId: 'clevel-group'
-      });
+        groupId: groupIds[1] // clevel-group
+      };
+      questions.push(question);
+      console.log(`C-Level ${dimension} question ${index + 1}:`, text.substring(0, 30));
     });
   });
   
   // Bloco 3: SCARF Líderes e Gestores (25 perguntas)
+  console.log("Creating Managers SCARF questions...");
   Object.entries(scarfQuestionsByDimension).forEach(([dimension, dimensionQuestions]) => {
-    dimensionQuestions.forEach((text) => {
-      questions.push({
+    dimensionQuestions.forEach((text, index) => {
+      const question: Question = {
         id: crypto.randomUUID(),
         text: `[Líderes/Gestores] ${text}`,
         type: 'multiple-choice',
         options: createScarfOptions(),
         required: true,
-        groupId: 'managers-group'
-      });
+        groupId: groupIds[2] // managers-group
+      };
+      questions.push(question);
+      console.log(`Managers ${dimension} question ${index + 1}:`, text.substring(0, 30));
     });
   });
   
   // Bloco 4: SCARF Perfil Preferido (25 perguntas)
+  console.log("Creating User Profile SCARF questions...");
   Object.entries(scarfQuestionsByDimension).forEach(([dimension, dimensionQuestions]) => {
-    dimensionQuestions.forEach((text) => {
-      questions.push({
+    dimensionQuestions.forEach((text, index) => {
+      const question: Question = {
         id: crypto.randomUUID(),
         text: `[Seu Perfil] ${text}`,
         type: 'multiple-choice',
         options: createScarfOptions(),
         required: true,
-        groupId: 'user-profile-group'
-      });
+        groupId: groupIds[3] // user-profile-group
+      };
+      questions.push(question);
+      console.log(`User Profile ${dimension} question ${index + 1}:`, text.substring(0, 30));
     });
+  });
+  
+  console.log(`=== TOTAL QUESTIONS CREATED: ${questions.length} ===`);
+  console.log("Question distribution:", {
+    strategic: questions.filter(q => q.groupId === groupIds[0]).length,
+    clevel: questions.filter(q => q.groupId === groupIds[1]).length,
+    managers: questions.filter(q => q.groupId === groupIds[2]).length,
+    userProfile: questions.filter(q => q.groupId === groupIds[3]).length
   });
   
   return questions;
 };
 
 const createQuestionGroups = (): QuestionGroup[] => {
-  const strategicGroupId = crypto.randomUUID();
-  const clevelGroupId = crypto.randomUUID();
-  const managersGroupId = crypto.randomUUID();
-  const userProfileGroupId = crypto.randomUUID();
-  
-  return [
+  const groups = [
     {
-      id: strategicGroupId,
+      id: crypto.randomUUID(),
       title: "Momento Estratégico da Organização",
       description: "Avaliação do contexto estratégico atual da organização",
       weight: 0, // Peso 0 pois é diagnóstico
       order: 0
     },
     {
-      id: clevelGroupId,
+      id: crypto.randomUUID(),
       title: "SCARF - C-Level",
       description: "Avaliação das dimensões SCARF para o nível executivo (peso 65%)",
       weight: 65, // Peso 65% conforme especificação
       order: 1
     },
     {
-      id: managersGroupId,
+      id: crypto.randomUUID(),
       title: "SCARF - Líderes e Gestores",
       description: "Avaliação das dimensões SCARF para líderes e gestores (peso 35%)",
       weight: 35, // Peso 35% conforme especificação
       order: 2
     },
     {
-      id: userProfileGroupId,
+      id: crypto.randomUUID(),
       title: "SCARF - Perfil de Liderança Preferido",
       description: "Suas preferências pessoais nas dimensões SCARF",
       weight: 100, // Peso 100% para o perfil do usuário
       order: 3
     }
   ];
+  
+  console.log("=== QUESTION GROUPS CREATED ===");
+  groups.forEach((group, index) => {
+    console.log(`Group ${index + 1}:`, {
+      id: group.id,
+      title: group.title,
+      weight: group.weight,
+      order: group.order
+    });
+  });
+  
+  return groups;
 };
 
 export const createScarfQuiz = (): Quiz => {
-  const quizId = crypto.randomUUID();
-  const groups = createQuestionGroups();
-  let questions = createQuestions();
+  console.log("=== STARTING SCARF QUIZ CREATION ===");
   
-  // Atualizar groupIds nas perguntas com os IDs reais
-  questions = questions.map((question, index) => {
-    if (index < 10) {
-      return { ...question, groupId: groups[0].id }; // Momento Estratégico
-    } else if (index < 35) {
-      return { ...question, groupId: groups[1].id }; // C-Level
-    } else if (index < 60) {
-      return { ...question, groupId: groups[2].id }; // Líderes/Gestores
-    } else {
-      return { ...question, groupId: groups[3].id }; // Perfil Preferido
-    }
-  });
+  const quizId = crypto.randomUUID();
+  console.log("Quiz ID:", quizId);
+  
+  const groups = createQuestionGroups();
+  const groupIds = groups.map(g => g.id);
+  
+  const questions = createQuestions(groupIds);
   
   const profileRanges: ProfileRange[] = [
     {
@@ -212,7 +235,7 @@ export const createScarfQuiz = (): Quiz => {
     }
   ];
   
-  return {
+  const quiz: Quiz = {
     id: quizId,
     title: "Formulário Completo de Fit de Liderança - Modelo SCARF",
     description: "Avaliação do alinhamento entre o seu perfil de liderança preferido e o estilo de liderança praticado na organização, usando escala de 6 pontos de compatibilidade.",
@@ -222,4 +245,15 @@ export const createScarfQuiz = (): Quiz => {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
+  
+  console.log("=== SCARF QUIZ CREATION COMPLETED ===");
+  console.log("Final quiz structure:", {
+    id: quiz.id,
+    title: quiz.title,
+    questionsCount: quiz.questions.length,
+    groupsCount: quiz.questionGroups.length,
+    profileRangesCount: quiz.profileRanges.length
+  });
+  
+  return quiz;
 };
