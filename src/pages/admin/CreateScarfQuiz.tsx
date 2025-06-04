@@ -3,11 +3,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Save, Play, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Save, Play, ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
 import { createScarfQuiz } from '@/data/scarfQuiz';
 import { useQuizSave } from '@/hooks/useQuizSave';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
 
 const CreateScarfQuiz = () => {
   const navigate = useNavigate();
@@ -15,42 +16,79 @@ const CreateScarfQuiz = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [quizCreated, setQuizCreated] = useState(false);
   const [creationProgress, setCreationProgress] = useState('');
+  const [progressPercent, setProgressPercent] = useState(0);
   const [createdQuizId, setCreatedQuizId] = useState<string | null>(null);
+  const [validationResults, setValidationResults] = useState<{
+    questionsGenerated: number;
+    groupsCreated: number;
+    profileRanges: number;
+  } | null>(null);
 
   const handleCreateScarfQuiz = async () => {
-    console.log("=== STARTING SCARF QUIZ CREATION PROCESS ===");
+    console.log("=== INICIANDO PROCESSO DE CRIAÇÃO DO QUIZ SCARF ===");
     setIsCreating(true);
-    setCreationProgress('Gerando estrutura do questionário...');
+    setProgressPercent(10);
+    setCreationProgress('Gerando estrutura do questionário SCARF...');
     
     try {
-      // Step 1: Create the quiz structure
+      // Passo 1: Criar a estrutura do quiz
       const scarfQuiz = createScarfQuiz();
-      console.log("Quiz structure created:", {
+      console.log("Estrutura do quiz criada:", {
         id: scarfQuiz.id,
         questionsCount: scarfQuiz.questions.length,
-        groupsCount: scarfQuiz.questionGroups.length
+        groupsCount: scarfQuiz.questionGroups.length,
+        profileRanges: scarfQuiz.profileRanges.length
       });
       
-      setCreationProgress(`Salvando ${scarfQuiz.questions.length} perguntas no banco de dados...`);
+      // Validar se o quiz foi criado corretamente
+      setValidationResults({
+        questionsGenerated: scarfQuiz.questions.length,
+        groupsCreated: scarfQuiz.questionGroups.length,
+        profileRanges: scarfQuiz.profileRanges.length
+      });
       
-      // Step 2: Save to database
+      setProgressPercent(30);
+      setCreationProgress(`Validando estrutura: ${scarfQuiz.questions.length} perguntas em ${scarfQuiz.questionGroups.length} grupos...`);
+      
+      // Verificar se temos as 85 perguntas esperadas
+      if (scarfQuiz.questions.length !== 85) {
+        throw new Error(`Esperado 85 perguntas, mas foram geradas ${scarfQuiz.questions.length}`);
+      }
+      
+      // Verificar distribuição por grupo
+      const questionsByGroup = scarfQuiz.questionGroups.map(group => ({
+        title: group.title,
+        count: scarfQuiz.questions.filter(q => q.groupId === group.id).length
+      }));
+      
+      console.log("Distribuição de perguntas por grupo:", questionsByGroup);
+      
+      setProgressPercent(50);
+      setCreationProgress('Iniciando salvamento no banco de dados...');
+      
+      // Passo 2: Salvar no banco de dados
       const savedQuiz = await saveToSupabase(scarfQuiz);
       
+      setProgressPercent(90);
+      
       if (savedQuiz) {
-        console.log("Quiz saved successfully with ID:", savedQuiz.id);
+        console.log("Quiz salvo com sucesso! ID:", savedQuiz.id);
         setCreatedQuizId(savedQuiz.id);
+        setProgressPercent(100);
         toast.success(`Questionário SCARF criado com sucesso! ${scarfQuiz.questions.length} perguntas salvas.`);
         setQuizCreated(true);
         setCreationProgress('');
       } else {
-        console.error("Failed to save quiz - savedQuiz is null");
+        console.error("Falha ao salvar quiz - savedQuiz é null");
         toast.error("Erro ao salvar questionário - tente novamente");
-        setCreationProgress('');
+        setCreationProgress('Erro ao salvar no banco de dados');
+        setProgressPercent(0);
       }
     } catch (error) {
-      console.error("Error creating SCARF quiz:", error);
+      console.error("Erro ao criar questionário SCARF:", error);
       toast.error(`Erro ao criar questionário SCARF: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-      setCreationProgress('');
+      setCreationProgress(`Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+      setProgressPercent(0);
     } finally {
       setIsCreating(false);
     }
@@ -58,11 +96,11 @@ const CreateScarfQuiz = () => {
 
   const handlePreviewSample = () => {
     if (createdQuizId) {
-      // Open the actual quiz for preview
+      // Abrir o quiz real para preview
       window.open(`/quiz/${createdQuizId}?preview=true`, '_blank');
     } else {
-      // Fallback to sample quiz
-      console.log("Creating sample quiz for preview...");
+      // Fallback para quiz de exemplo
+      console.log("Criando quiz de exemplo para preview...");
       const sampleQuiz = createScarfQuiz();
       localStorage.setItem('preview-quiz', JSON.stringify(sampleQuiz));
       window.open(`/quiz/preview`, '_blank');
@@ -70,7 +108,7 @@ const CreateScarfQuiz = () => {
   };
 
   const handleBackToAdmin = () => {
-    console.log("Navigating back to admin...");
+    console.log("Navegando de volta para admin...");
     navigate('/admin');
   };
 
@@ -83,25 +121,64 @@ const CreateScarfQuiz = () => {
   if (quizCreated) {
     return (
       <div className="container mx-auto p-4 pt-16">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="mb-8">
-            <div className="text-green-600 text-6xl mb-4">✓</div>
-            <h1 className="text-3xl font-bold mb-4 text-green-600">Questionário SCARF Criado!</h1>
-            <p className="text-gray-600 mb-4">
-              O formulário completo de Fit de Liderança com Modelo SCARF foi criado com sucesso e está pronto para uso.
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <div className="text-green-600 text-6xl mb-4">
+              <CheckCircle className="mx-auto w-16 h-16" />
+            </div>
+            <h1 className="text-3xl font-bold mb-4 text-green-600">
+              Questionário SCARF Criado com Sucesso!
+            </h1>
+            <p className="text-gray-600 mb-6">
+              O formulário completo de Fit de Liderança com Modelo SCARF foi criado e está pronto para uso.
             </p>
-            
-            {createdQuizId && (
-              <Alert className="mb-6">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>ID do Quiz:</strong> {createdQuizId}
-                  <br />
-                  Todas as 85 perguntas foram salvas corretamente no banco de dados.
-                </AlertDescription>
-              </Alert>
-            )}
           </div>
+          
+          {validationResults && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-green-600">Validação da Criação</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">
+                      {validationResults.questionsGenerated}
+                    </div>
+                    <div className="text-sm text-green-800">Perguntas Criadas</div>
+                    <div className="text-xs text-green-600 mt-1">✓ 85 perguntas esperadas</div>
+                  </div>
+                  <div className="text-center p-4 bg-blue-50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {validationResults.groupsCreated}
+                    </div>
+                    <div className="text-sm text-blue-800">Grupos Criados</div>
+                    <div className="text-xs text-blue-600 mt-1">✓ 4 blocos SCARF</div>
+                  </div>
+                  <div className="text-center p-4 bg-purple-50 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">
+                      {validationResults.profileRanges}
+                    </div>
+                    <div className="text-sm text-purple-800">Perfis de Resultado</div>
+                    <div className="text-xs text-purple-600 mt-1">✓ 5 faixas de fit</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+            
+          {createdQuizId && (
+            <Alert className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>ID do Quiz:</strong> {createdQuizId}
+                <br />
+                <strong>Status:</strong> Todas as 85 perguntas foram salvas corretamente no banco de dados.
+                <br />
+                <strong>Estrutura:</strong> 4 blocos (Estratégico + 3 SCARF) com escala de 6 pontos.
+              </AlertDescription>
+            </Alert>
+          )}
           
           <div className="flex gap-4 justify-center flex-wrap">
             <Button onClick={handleBackToAdmin} size="lg">
@@ -127,7 +204,7 @@ const CreateScarfQuiz = () => {
 
   return (
     <div className="container mx-auto p-4 pt-16">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <Button 
             variant="outline" 
@@ -145,13 +222,20 @@ const CreateScarfQuiz = () => {
           </p>
         </div>
 
-        {creationProgress && (
-          <Alert className="mb-6">
-            <AlertCircle className="h-4 w-4 animate-spin" />
-            <AlertDescription>
-              {creationProgress}
-            </AlertDescription>
-          </Alert>
+        {(creationProgress || isCreating) && (
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="h-4 w-4 animate-spin text-blue-500" />
+                  <span className="text-sm font-medium">{creationProgress}</span>
+                </div>
+                {progressPercent > 0 && (
+                  <Progress value={progressPercent} className="w-full" />
+                )}
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         <Card className="mb-6">

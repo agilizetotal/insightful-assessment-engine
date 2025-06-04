@@ -1,24 +1,13 @@
 
-import { AuthCard } from "@/components/auth/AuthCard";
-import { useAuth } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
-import { translations } from "@/locales/pt-BR";
+import { AuthCard } from '@/components/auth/AuthCard';
+import QuickNavigation from '@/components/QuickNavigation';
 
 const Auth = () => {
-  const { user } = useAuth();
-  
-  // Se o usuário já estiver logado, redirecionar para a página inicial
-  if (user) {
-    return <Navigate to="/admin" replace />;
-  }
-  
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-indigo-50 to-white p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <h1 className="text-3xl font-bold mb-6 text-center bg-clip-text text-transparent bg-gradient-to-r from-quiz-primary to-quiz-secondary">
-          {translations.index.title}
-        </h1>
         <AuthCard />
+        <QuickNavigation />
       </div>
     </div>
   );
